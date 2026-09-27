@@ -1,0 +1,59 @@
+# ==============================================================================
+# SecureVault - Production Git Ignore Configuration
+# ==============================================================================
+
+# Environment Secrets & Credentials (CRITICAL)
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.crt
+*.pfx
+*.p12
+
+# SSL / TLS Certificate Directories
+nginx/ssl/*.pem
+nginx/ssl/*.key
+nginx/ssl/*.crt
+nginx/certs/*.crt
+nginx/certs/*.key
+
+# Python Virtual Environments & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+ai-service/.venv/
+ai-service/__pycache__/
+ai-service/app/__pycache__/
+*.egg-info/
+dist/
+build/
+
+# IDE & Editor Metadata
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Docker & Volume Data (if mounted locally)
+docker_data/
+*.log
+logs/
+
+# Nextcloud and Database dumps
+*.sql
+*.tar.gz
+*.zip

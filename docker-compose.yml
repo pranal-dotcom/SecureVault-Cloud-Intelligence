@@ -1,0 +1,188 @@
+version: '3.8'
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. Database Service: MariaDB 10.6 with UTF8MB4 and ACID Compliance
+  # ----------------------------------------------------------------------------
+  db:
+    image: mariadb:10.6
+    container_name: securevault-db
+    restart: unless-stopped
+    command: >
+      --transaction-isolation=READ-COMMITTED --binlog-format=ROW --innodb-file-per-table=1 --skip-innodb-read-only --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - db_data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-nextcloud}
+      - MYSQL_USER=${MYSQL_USER:-nextcloud}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    networks:
+      - securevault-net
+    healthcheck:
+      test: [ "CMD-SHELL", "mysqladmin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ----------------------------------------------------------------------------
+  # 2. In-Memory Cache & File Locking Service: Redis (Alpine)
+  # ----------------------------------------------------------------------------
+  redis:
+    image: redis:alpine
+    container_name: securevault-redis
+    restart: unless-stopped
+    command: >
+      redis-server --requirepass ${REDIS_HOST_PASSWORD} --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - securevault-net
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  # ----------------------------------------------------------------------------
+  # 3. Application Service: Nextcloud (Apache)
+  # ----------------------------------------------------------------------------
+  nextcloud:
+    image: nextcloud:apache
+    container_name: securevault-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - nextcloud_html:/var/www/html
+      - nextcloud_custom_apps:/var/www/html/custom_apps
+      - nextcloud_config:/var/www/html/config
+      - nextcloud_data:/var/www/html/data
+      - ./config/s3.config.php:/var/www/html/config/s3.config.php:ro
+    environment:
+      # Database Configuration
+      - MYSQL_HOST=db
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-nextcloud}
+      - MYSQL_USER=${MYSQL_USER:-nextcloud}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      # Redis Configuration
+      - REDIS_HOST=redis
+      - REDIS_HOST_PORT=6379
+      - REDIS_HOST_PASSWORD=${REDIS_HOST_PASSWORD}
+      # Administrator Auto-Provisioning (Initial Setup)
+      - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER:-admin}
+      - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD}
+      # Object Storage (AWS S3 & SSE-KMS) Configuration
+      - OBJECTSTORE_S3_BUCKET=${OBJECTSTORE_S3_BUCKET:-${S3_BUCKET_NAME:-}}
+      - OBJECTSTORE_S3_REGION=${OBJECTSTORE_S3_REGION:-${AWS_REGION:-us-east-1}}
+      - OBJECTSTORE_S3_KEY=${OBJECTSTORE_S3_KEY:-${AWS_ACCESS_KEY_ID:-}}
+      - OBJECTSTORE_S3_SECRET=${OBJECTSTORE_S3_SECRET:-${AWS_SECRET_ACCESS_KEY:-}}
+      - OBJECTSTORE_S3_USE_SSE=${OBJECTSTORE_S3_USE_SSE:-false}
+      - OBJECTSTORE_S3_HOST=${OBJECTSTORE_S3_HOST:-}
+      - OBJECTSTORE_S3_PORT=${OBJECTSTORE_S3_PORT:-}
+      - OBJECTSTORE_S3_PATH_STYLE=${OBJECTSTORE_S3_PATH_STYLE:-false}
+      - OBJECTSTORE_S3_SSL=${OBJECTSTORE_S3_SSL:-true}
+      # Proxy & Trust Configuration
+      - OVERWRITEPROTOCOL=${OVERWRITEPROTOCOL:-https}
+      - OVERWRITEHOST=${OVERWRITEHOST:-}
+      - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_TRUSTED_DOMAINS}
+      - TRUSTED_PROXIES=${TRUSTED_PROXIES:-reverse-proxy}
+      - DEFAULT_PHONE_REGION=${DEFAULT_PHONE_REGION:-US}
+      # PHP Environment Tunables
+      - PHP_MEMORY_LIMIT=${PHP_MEMORY_LIMIT:-2048M}
+      - PHP_UPLOAD_LIMIT=${PHP_UPLOAD_LIMIT:-10G}
+    networks:
+      - securevault-net
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:80/status.php || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ----------------------------------------------------------------------------
+  # 4. Reverse Proxy Service: Nginx
+  # ----------------------------------------------------------------------------
+  reverse-proxy:
+    image: nginx:alpine
+    container_name: securevault-proxy
+    restart: unless-stopped
+    depends_on:
+      - nextcloud
+      - ai-service
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/certbot:/var/www/certbot:ro
+      - ./nginx/html:/usr/share/nginx/html:ro
+    networks:
+      - securevault-net
+    healthcheck:
+      test: [ "CMD-SHELL", "nginx -t || exit 1" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ----------------------------------------------------------------------------
+  # 5. AI Document Intelligence Service: FastAPI, OCR & PII Engine
+  # ----------------------------------------------------------------------------
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: securevault-ai
+    restart: unless-stopped
+    expose:
+      - "8000"
+    volumes:
+      - ./ai-service/app:/app/app:ro
+    environment:
+      - NEXTCLOUD_HOST=nextcloud
+      - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER:-admin}
+      - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD}
+      - DOMAIN_NAME=${DOMAIN_NAME:-localhost}
+    networks:
+      - securevault-net
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8000/health || exit 1" ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+# ==============================================================================
+# Isolated Bridge Network
+# ==============================================================================
+networks:
+  securevault-net:
+    name: securevault-net
+    driver: bridge
+    driver_opts:
+      com.docker.network.enable_icc: "true"
+
+# ==============================================================================
+# Persistent Named Volumes
+# ==============================================================================
+volumes:
+  db_data:
+    name: securevault_db_data
+  redis_data:
+    name: securevault_redis_data
+  nextcloud_html:
+    name: securevault_nc_html
+  nextcloud_custom_apps:
+    name: securevault_nc_custom_apps
+  nextcloud_config:
+    name: securevault_nc_config
+  nextcloud_data:
+    name: securevault_nc_data
