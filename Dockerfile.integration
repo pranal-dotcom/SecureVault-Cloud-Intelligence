@@ -1,0 +1,29 @@
+# ==============================================================================
+# SecureVault Integration Test Runner Container
+# Runs AI service & WAF/perimeter defense integration test suites
+# inside Docker, connected to the live securevault-net bridge network.
+# ==============================================================================
+FROM python:3.11-slim
+
+# Install curl for health-wait, and Pillow system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    libglib2.0-0 \
+    libjpeg-dev \
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /tests
+
+# Install Python test dependencies
+COPY scripts/requirements.integration.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy integration test scripts
+COPY scripts/test_ai_service.py ./test_ai_service.py
+COPY scripts/attack_simulation.py ./attack_simulation.py
+COPY scripts/entrypoint.sh ./entrypoint.sh
+
+RUN chmod +x entrypoint.sh
+
+ENTRYPOINT ["./entrypoint.sh"]

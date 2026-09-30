@@ -30,7 +30,8 @@ class Colors:
     BOLD      = '\033[1m'
     RESET     = '\033[0m'
 
-AI_BASE_URL = "https://localhost/ai-api"
+import os
+AI_BASE_URL = f"https://{os.environ.get('SECUREVAULT_HOST', 'localhost')}/ai-api"
 
 def print_header(title: str):
     print(f"\n{Colors.BOLD}{Colors.CYAN}{'=' * 75}{Colors.RESET}")

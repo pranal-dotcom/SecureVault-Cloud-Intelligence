@@ -27,7 +27,8 @@ class Colors:
     UNDERLINE = '\033[4m'
     RESET     = '\033[0m'
 
-TARGET_BASE = "https://localhost"
+import os
+TARGET_BASE = f"https://{os.environ.get('SECUREVAULT_HOST', 'localhost')}"
 
 def print_header(title: str):
     print(f"\n{Colors.BOLD}{Colors.CYAN}{'=' * 75}{Colors.RESET}")

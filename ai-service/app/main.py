@@ -12,6 +12,10 @@ from app.pii import detect_and_redact_pii
 from app.summarizer import generate_summary
 from app.dashboard import DASHBOARD_HTML
 
+class LoginPayload(BaseModel):
+    username: str
+    password: str
+
 app = FastAPI(
     title="SecureVault AI Document Intelligence Engine",
     description="Autonomous OCR, PII Identification & Redaction, and Summary Engine for Zero-Trust Cloud Vault",
@@ -36,7 +40,71 @@ app.add_middleware(
 @app.get("/", response_class=HTMLResponse)
 def get_dashboard():
     """Renders the interactive SecureVault AI Document Intelligence Web Dashboard."""
-    return HTMLResponse(content=DASHBOARD_HTML)
+    return HTMLResponse(
+        content=DASHBOARD_HTML,
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0"
+        }
+    )
+
+@app.post("/login")
+@app.post("/ai-api/login")
+def login(payload: LoginPayload):
+    import os
+    import requests
+    from requests.auth import HTTPBasicAuth
+    
+    nc_host = os.getenv("NEXTCLOUD_HOST", "nextcloud")
+    admin_user = os.getenv("NEXTCLOUD_ADMIN_USER", "admin")
+    admin_pass = os.getenv("NEXTCLOUD_ADMIN_PASSWORD", "ChangeMeWithAStrongPassword123!")
+    
+    # 1. Check if the user exists via OCS API using Admin Auth
+    ocs_url = f"http://{nc_host}/ocs/v1.php/cloud/users/{payload.username}"
+    headers = {"OCS-APIRequest": "true", "Accept": "application/json"}
+    admin_auth = HTTPBasicAuth(admin_user, admin_pass)
+    
+    try:
+        check_resp = requests.get(ocs_url, headers=headers, auth=admin_auth, timeout=5)
+        check_data = check_resp.json() if check_resp.status_code == 200 else {}
+        ocs_statuscode = check_data.get("ocs", {}).get("meta", {}).get("statuscode", 0)
+        
+        if ocs_statuscode == 404:
+            # User does not exist, auto-provision them!
+            create_url = f"http://{nc_host}/ocs/v1.php/cloud/users"
+            data = {"userid": payload.username, "password": payload.password}
+            create_resp = requests.post(create_url, headers=headers, auth=admin_auth, data=data, timeout=8)
+            create_data = create_resp.json() if create_resp.status_code == 200 else {}
+            create_statuscode = create_data.get("ocs", {}).get("meta", {}).get("statuscode", 0)
+            
+            if create_statuscode == 100:
+                return {"status": "success", "message": "User auto-provisioned and authenticated"}
+            else:
+                msg = create_data.get("ocs", {}).get("meta", {}).get("message", "Failed to auto-provision user.")
+                raise HTTPException(status_code=400, detail=f"User Registration Failed: {msg}")
+                
+        elif ocs_statuscode == 100:
+            # 2. User exists, verify credentials against Nextcloud WebDAV
+            auth = HTTPBasicAuth(payload.username, payload.password)
+            url = f"http://{nc_host}/remote.php/dav/files/{payload.username}/"
+            
+            resp = requests.request("PROPFIND", url, auth=auth, timeout=5)
+            if resp.status_code in (200, 207):
+                return {"status": "success", "message": "Authentication successful"}
+            elif resp.status_code == 401:
+                raise HTTPException(status_code=401, detail="Invalid credentials. Please try again.")
+            elif resp.status_code == 429:
+                raise HTTPException(status_code=429, detail="Too many failed login attempts. Nextcloud brute-force protection triggered. Please wait 30 seconds.")
+            else:
+                raise HTTPException(status_code=401, detail=f"Authentication failed (Status: {resp.status_code})")
+        else:
+            raise HTTPException(status_code=500, detail=f"Unexpected response from Nextcloud OCS API (Code: {ocs_statuscode})")
+            
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(status_code=500, detail=str(e))
 
 class TextPayload(BaseModel):
     text: str = Field(..., description="Raw text to be analyzed for PII and summarized")
@@ -135,6 +203,64 @@ async def analyze_document(
         "summary": doc_summary
     }
 
+@app.post("/vault/files")
+@app.post("/ai-api/vault/files")
+def list_vault_files(payload: LoginPayload):
+    import os
+    import requests
+    import xml.etree.ElementTree as ET
+    from requests.auth import HTTPBasicAuth
+    
+    nc_host = os.getenv("NEXTCLOUD_HOST", "nextcloud")
+    folder_name = "SecureVault_Sanitized_Docs"
+    url = f"http://{nc_host}/remote.php/dav/files/{payload.username}/{folder_name}/"
+    auth = HTTPBasicAuth(payload.username, payload.password)
+    
+    try:
+        # PROPFIND Depth 1 gets the folder and its immediate children
+        headers = {"Depth": "1"}
+        resp = requests.request("PROPFIND", url, auth=auth, headers=headers, timeout=5)
+        
+        if resp.status_code == 404:
+            return {"status": "success", "files": []}
+        elif resp.status_code not in (200, 207):
+            raise HTTPException(status_code=401, detail="Invalid credentials or unauthorized.")
+            
+        # Parse WebDAV XML response
+        root = ET.fromstring(resp.content)
+        files = []
+        # XML namespaces for WebDAV
+        namespaces = {'d': 'DAV:'}
+        
+        for response in root.findall('d:response', namespaces):
+            href = response.find('d:href', namespaces)
+            if href is not None:
+                path = href.text
+                # Skip the directory itself
+                if path.endswith(f"/{folder_name}/"):
+                    continue
+                
+                filename = path.split('/')[-1]
+                
+                # Get file size and last modified (if needed)
+                propstat = response.find('d:propstat', namespaces)
+                size = 0
+                if propstat is not None:
+                    prop = propstat.find('d:prop', namespaces)
+                    if prop is not None:
+                        getcontentlength = prop.find('d:getcontentlength', namespaces)
+                        if getcontentlength is not None and getcontentlength.text:
+                            size = int(getcontentlength.text)
+                
+                if filename:
+                    files.append({"name": filename, "size": size})
+                    
+        return {"status": "success", "files": files}
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(status_code=500, detail=f"Failed to fetch files: {str(e)}")
+
 @app.post("/analyze/text")
 @app.post("/ai-api/analyze/text")
 def analyze_text_json(payload: TextPayload):
@@ -164,6 +290,8 @@ class VaultCommitPayload(BaseModel):
     filename: Optional[str] = Field("Sanitized_KYC_Document.txt", description="Target filename for Nextcloud Vault")
     sanitized_text: str = Field(..., description="Sanitized text payload")
     original_filename: Optional[str] = Field(None, description="Original uploaded filename")
+    username: Optional[str] = Field(None, description="Nextcloud username")
+    password: Optional[str] = Field(None, description="Nextcloud password")
 
 @app.post("/vault/commit")
 @app.post("/ai-api/vault/commit")
@@ -179,8 +307,8 @@ def commit_to_vault(payload: VaultCommitPayload):
     from requests.auth import HTTPBasicAuth
 
     nc_host = os.getenv("NEXTCLOUD_HOST", "nextcloud")
-    nc_user = os.getenv("NEXTCLOUD_ADMIN_USER", "admin")
-    nc_pass = os.getenv("NEXTCLOUD_ADMIN_PASSWORD", "ChangeMeWithAStrongPassword123!")
+    nc_user = payload.username if payload.username else os.getenv("NEXTCLOUD_ADMIN_USER", "admin")
+    nc_pass = payload.password if payload.password else os.getenv("NEXTCLOUD_ADMIN_PASSWORD", "ChangeMeWithAStrongPassword123!")
     folder_name = "SecureVault_Sanitized_Docs"
     
     # Generate canonical sanitized filename if not provided

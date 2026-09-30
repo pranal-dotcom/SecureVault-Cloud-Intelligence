@@ -160,6 +160,29 @@ services:
       retries: 3
       start_period: 10s
 
+  # ----------------------------------------------------------------------------
+  # 6. Integration Test Runner (profile: test)
+  # Runs inside Docker on securevault-net — tests all container integrations.
+  # Usage: docker compose --profile test run --rm integration-tests
+  # ----------------------------------------------------------------------------
+  integration-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.integration
+    container_name: securevault-integration-tests
+    profiles:
+      - test
+    depends_on:
+      - reverse-proxy
+      - ai-service
+      - nextcloud
+    environment:
+      - SECUREVAULT_HOST=reverse-proxy
+      - AI_BASE_URL=https://reverse-proxy/ai-api/health
+      - NC_URL=https://reverse-proxy/status.php
+    networks:
+      - securevault-net
+
 # ==============================================================================
 # Isolated Bridge Network
 # ==============================================================================

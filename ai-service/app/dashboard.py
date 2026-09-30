@@ -1354,17 +1354,17 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
             <div class="form-group">
                 <label>Security Principal (Username)</label>
-                <input type="text" id="authUsername" class="form-control" placeholder="e.g. admin" value="admin">
+                <input type="text" id="authUsername" class="form-control" placeholder="Enter Nextcloud username (e.g., admin)">
             </div>
 
             <div class="form-group">
                 <label>Master Security Credential</label>
-                <input type="password" id="authPassword" class="form-control" placeholder="••••••••••••" value="SecureVault@2026">
+                <input type="password" id="authPassword" class="form-control" placeholder="Enter Nextcloud password">
             </div>
 
-            <div class="auth-hint">
-                <span>🔐</span>
-                <span>Default credentials prefilled for verified administrators.</span>
+            <div class="auth-hint" style="margin-bottom: 1.6rem; line-height: 1.4;">
+                <span>💡</span>
+                <span><strong>Hint:</strong> Use your Nextcloud credentials.<br>• Username: Your Nextcloud ID (e.g., admin).<br>• Password: The exact password used for Nextcloud.</span>
             </div>
 
             <button class="btn-auth-submit" onclick="handleLogin()">Unlock Intelligence Pipeline ➔</button>
@@ -1618,7 +1618,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                         </div>
                         <div class="spec-row">
                             <span class="spec-label">Nextcloud WebDAV Vault:</span>
-                            <span class="spec-val" id="specVaultPath" style="color: var(--gold-300);">/remote.php/dav/files/admin/Sanitized_KYC_Document.txt</span>
+                            <span class="spec-val" id="specVaultPath" style="color: var(--gold-300);">/remote.php/dav/files/...</span>
                         </div>
                         <div class="spec-row">
                             <span class="spec-label">Vault Sync Status:</span>
@@ -1676,7 +1676,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                     </div>
                     <div class="vault-status-card">
                         <span class="label">Zero-Trust Directory</span>
-                        <span class="val">/remote.php/dav/files/admin/</span>
+                        <span class="val" id="modalDirectoryPath">/remote.php/dav/files/...</span>
                     </div>
                     <div class="vault-status-card">
                         <span class="label">WebDAV Sync Status</span>
@@ -1783,25 +1783,54 @@ Sanitized document content ready.
             initDropzone();
         });
 
-        function handleLogin() {
+        async function handleLogin() {
             const u = document.getElementById('authUsername').value.trim();
             const p = document.getElementById('authPassword').value.trim();
             const err = document.getElementById('authError');
+            const btn = document.querySelector('.btn-auth-submit');
 
             if (u && p) {
-                sessionStorage.setItem('securevault_auth_user', u);
-                err.style.display = 'none';
-                unlockDashboard(u);
-                showToast("Identity verified. Royal Gold session established.");
+                btn.disabled = true;
+                btn.innerText = "Verifying...";
+                try {
+                    const res = await fetch('/ai-api/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: u, password: p })
+                    });
+                    
+                    if (res.ok) {
+                        sessionStorage.setItem('securevault_auth_user', u);
+                        // Store password temporarily in session storage to use for vault commit
+                        sessionStorage.setItem('securevault_auth_pass', p);
+                        err.style.display = 'none';
+                        unlockDashboard(u);
+                        showToast("Identity verified. Session established.");
+                    } else {
+                        const errorData = await res.json();
+                        err.style.display = 'block';
+                        err.innerText = errorData.detail || "Invalid credentials. Access Denied.";
+                    }
+                } catch (error) {
+                    err.style.display = 'block';
+                    err.innerText = "Authentication error. Please try again.";
+                } finally {
+                    btn.disabled = false;
+                    btn.innerText = "Unlock Intelligence Pipeline ➔";
+                }
             } else {
                 err.style.display = 'block';
+                err.innerText = "Please provide username and password.";
             }
         }
 
         function handleLogout() {
             sessionStorage.removeItem('securevault_auth_user');
+            sessionStorage.removeItem('securevault_auth_pass');
             document.getElementById('authGate').style.display = 'flex';
             document.getElementById('userBadge').style.display = 'none';
+            document.getElementById('authUsername').value = '';
+            document.getElementById('authPassword').value = '';
             resetPipeline();
         }
 
@@ -1809,6 +1838,15 @@ Sanitized document content ready.
             document.getElementById('authGate').style.display = 'none';
             document.getElementById('sessionUserName').innerText = username;
             document.getElementById('userBadge').style.display = 'flex';
+            
+            const specVaultPath = document.getElementById('specVaultPath');
+            if (specVaultPath && specVaultPath.innerText.includes('...')) {
+                specVaultPath.innerText = `/remote.php/dav/files/${username}/Sanitized_Document.txt`;
+            }
+            const modalDir = document.getElementById('modalDirectoryPath');
+            if (modalDir) {
+                modalDir.innerText = `/remote.php/dav/files/${username}/`;
+            }
         }
 
         // Stepper Navigation
@@ -1861,20 +1899,28 @@ Sanitized document content ready.
             const targetFilename = `Sanitized_${baseName || 'KYC_Document'}.txt`;
 
             try {
+                const u = sessionStorage.getItem('securevault_auth_user') || '';
+                const p = sessionStorage.getItem('securevault_auth_pass') || '';
+                
                 const res = await fetch('/ai-api/vault/commit', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         filename: targetFilename,
                         sanitized_text: analysisData.redacted_text,
-                        original_filename: analysisData.filename
+                        original_filename: analysisData.filename,
+                        username: u,
+                        password: p
                     })
                 });
 
                 if (res.ok) {
                     const data = await res.json();
                     const pathEl = document.getElementById('specVaultPath');
-                    if (pathEl) pathEl.innerText = data.vault_path || `/remote.php/dav/files/admin/${targetFilename}`;
+                    if (pathEl) {
+                        const defaultPath = u ? `/remote.php/dav/files/${u}/${targetFilename}` : `/remote.php/dav/files/admin/${targetFilename}`;
+                        pathEl.innerText = data.vault_path || defaultPath;
+                    }
                     
                     if (data.status === 'success') {
                         if (statusEl) statusEl.innerHTML = '<span style="color: var(--emerald-500);">🟢 201 Created — Stored in Nextcloud Files</span>';
@@ -2106,24 +2152,82 @@ Sanitized document content ready.
             showToast("Pipeline reset. Ready for new document intake.");
         }
 
-        function openNextcloudVault() {
+        async function openNextcloudVault() {
             const modal = document.getElementById('vaultModalOverlay');
             if (!modal) return;
             
-            // Populate current sanitized file details
-            const baseName = (analysisData && analysisData.filename) ? analysisData.filename.replace(/\\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_') : 'KYC_Document';
-            const currentFileName = `Sanitized_${baseName}.txt`;
-            const currentText = (analysisData && analysisData.redacted_text) ? analysisData.redacted_text : "Confidential KYC Client Record [PII SCRUBBED]\\nFull Name: Rameshwar Verma\\nAadhaar Number: [REDACTED_AADHAAR]\\nPAN Card Number: [REDACTED_PAN]\\nCorporate Email: [REDACTED_EMAIL]\\nContact Phone: [REDACTED_PHONE]\\nAccount Status: KYC Verified against UIDAI central registry.\\n\\nStatus: Encrypted with SSE-KMS (AES-256-GCM) in AWS S3 / Nextcloud Primary Storage.";
+            const u = sessionStorage.getItem('securevault_auth_user') || '';
+            const p = sessionStorage.getItem('securevault_auth_pass') || '';
             
-            document.getElementById('modalCurrentFileName').innerText = currentFileName;
-            document.getElementById('modalPreviewTitle').innerText = currentFileName;
-            document.getElementById('modalPreviewBody').innerText = currentText;
-
-            modal.style.display = 'flex';
-            if (analysisData && analysisData.redacted_text) {
-                triggerVaultCommit();
+            if (!u || !p) {
+                showToast("Authentication required to access private vault.");
+                return;
             }
-            showToast("Opening SecureVault Cloud Storage & Nextcloud Explorer...");
+            
+            showToast("Fetching your isolated Nextcloud vault...");
+            
+            try {
+                const res = await fetch('/ai-api/vault/files', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: u, password: p })
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    
+                    const titleEl = document.getElementById('modalPreviewTitle');
+                    const bodyEl = document.getElementById('modalPreviewBody');
+                    
+                    // Update directory path text
+                    const dirEl = document.getElementById('modalDirectoryPath');
+                    if (dirEl) dirEl.innerText = `/remote.php/dav/files/${u}/SecureVault_Sanitized_Docs/`;
+                    
+                    // Build file list for the sidebar
+                    const sidebar = document.querySelector('.vault-sidebar');
+                    if (sidebar) {
+                        let fileListHtml = `
+                            <div class="vault-sidebar-title">SecureVault Storage</div>
+                            <div class="vault-file-item active" id="vaultItemCurrent" onclick="selectVaultFile('current', event)">
+                                📄 <span style="margin-left: 8px;">Active Document</span>
+                            </div>
+                        `;
+                        
+                        if (data.files && data.files.length > 0) {
+                            fileListHtml += `<div class="vault-sidebar-title" style="margin-top: 15px;">Your Isolated Files</div>`;
+                            data.files.forEach(f => {
+                                fileListHtml += `
+                                <div class="vault-file-item" style="display:flex; justify-content:space-between; cursor:default;">
+                                    <span>📄 ${f.name}</span>
+                                    <span style="font-size:0.75rem; color:#888;">${(f.size / 1024).toFixed(1)} KB</span>
+                                </div>`;
+                            });
+                        } else {
+                            fileListHtml += `<div style="padding: 15px; color: #888; font-size: 0.85rem;">No files found in your vault.</div>`;
+                        }
+                        sidebar.innerHTML = fileListHtml;
+                    }
+                    
+                    // Populate current sanitized file details
+                    const baseName = (analysisData && analysisData.filename) ? analysisData.filename.replace(/\\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_') : 'KYC_Document';
+                    const currentFileName = `Sanitized_${baseName}.txt`;
+                    const currentText = (analysisData && analysisData.redacted_text) ? analysisData.redacted_text : "No active document in pipeline.";
+                    
+                    document.getElementById('modalCurrentFileName').innerText = currentFileName;
+                    titleEl.innerText = currentFileName;
+                    bodyEl.innerText = currentText;
+
+                    modal.style.display = 'flex';
+                    if (analysisData && analysisData.redacted_text) {
+                        triggerVaultCommit();
+                    }
+                } else {
+                    showToast("Failed to fetch vault contents. Session may have expired.");
+                }
+            } catch (err) {
+                console.error("Vault fetch error:", err);
+                showToast("Error retrieving your private vault.");
+            }
         }
 
         function closeNextcloudVault() {
