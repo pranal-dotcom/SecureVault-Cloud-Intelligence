@@ -5,16 +5,22 @@ from typing import Optional, List, Dict, Any
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from app.ocr import process_document_ocr
 from app.pii import detect_and_redact_pii
 from app.summarizer import generate_summary
 from app.dashboard import DASHBOARD_HTML
+from app.landing import LANDING_HTML
 
 class LoginPayload(BaseModel):
     username: str
     password: str
+
+class FeedbackPayload(BaseModel):
+    category: str
+    comment: str
 
 app = FastAPI(
     title="SecureVault AI Document Intelligence Engine",
@@ -33,11 +39,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+import os
+static_dir = os.path.join(os.path.dirname(__file__), "static")
+if os.path.exists(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+@app.get("/", response_class=HTMLResponse)
+def get_landing():
+    """Renders the SecureVault SaaS Landing Page."""
+    return HTMLResponse(content=LANDING_HTML)
+
 @app.get("/dashboard", response_class=HTMLResponse)
 @app.get("/dashboard/", response_class=HTMLResponse)
 @app.get("/ai-api/dashboard", response_class=HTMLResponse)
 @app.get("/ai-api/dashboard/", response_class=HTMLResponse)
-@app.get("/", response_class=HTMLResponse)
 def get_dashboard():
     """Renders the interactive SecureVault AI Document Intelligence Web Dashboard."""
     return HTMLResponse(
@@ -105,6 +120,13 @@ def login(payload: LoginPayload):
         if isinstance(e, HTTPException):
             raise e
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/feedback")
+def submit_feedback(payload: FeedbackPayload):
+    """Stores user feedback from the landing page."""
+    # In a real app, this might insert into a database or send an email.
+    print(f"Feedback received - Category: {payload.category}, Comment: {payload.comment}")
+    return {"status": "success", "message": "Thank you for helping us secure SecureVault!"}
 
 class TextPayload(BaseModel):
     text: str = Field(..., description="Raw text to be analyzed for PII and summarized")
@@ -382,7 +404,7 @@ def commit_to_vault(payload: VaultCommitPayload):
                 "webdav_url": root_webdav_url,
                 "folder_webdav_url": folder_webdav_url,
                 "vault_path": vault_rel_path,
-                "nextcloud_url": "https://localhost/apps/files/",
+                "nextcloud_url": "https://localhost/index.php/apps/files/?dir=/SecureVault_Sanitized_Docs",
                 "bytes_written": len(file_bytes),
                 "nextcloud_status_code": resp.status_code,
                 "timestamp": datetime.now(timezone.utc).isoformat()
@@ -396,7 +418,7 @@ def commit_to_vault(payload: VaultCommitPayload):
                 "webdav_url": root_webdav_url,
                 "folder_webdav_url": folder_webdav_url,
                 "vault_path": vault_rel_path,
-                "nextcloud_url": "https://localhost/apps/files/",
+                "nextcloud_url": "https://localhost/index.php/apps/files/?dir=/SecureVault_Sanitized_Docs",
                 "bytes_written": len(file_bytes),
                 "nextcloud_status_code": resp.status_code,
                 "timestamp": datetime.now(timezone.utc).isoformat()
@@ -411,7 +433,7 @@ def commit_to_vault(payload: VaultCommitPayload):
             "webdav_url": root_webdav_url,
             "folder_webdav_url": folder_webdav_url,
             "vault_path": vault_rel_path,
-            "nextcloud_url": "https://localhost/apps/files/",
+            "nextcloud_url": "https://localhost/index.php/apps/files/?dir=/SecureVault_Sanitized_Docs",
             "bytes_written": len(file_bytes),
             "nextcloud_status_code": None,
             "timestamp": datetime.now(timezone.utc).isoformat()

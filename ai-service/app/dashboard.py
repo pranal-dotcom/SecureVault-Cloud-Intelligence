@@ -75,14 +75,15 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             background: rgba(212, 175, 55, 0.55);
         }
 
-        body {
+        body, .app-root-container {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: var(--bg-base);
-            background-image: 
-                radial-gradient(at 10% 10%, rgba(212, 175, 55, 0.07) 0px, transparent 55%),
-                radial-gradient(at 90% 15%, rgba(153, 101, 21, 0.08) 0px, transparent 50%),
-                radial-gradient(at 50% 90%, rgba(13, 15, 20, 0.95) 0px, transparent 100%);
-            color: var(--text-primary);
+            background: 
+                radial-gradient(circle at 75% 20%, rgba(245, 158, 11, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 15% 85%, rgba(30, 58, 138, 0.12) 0%, transparent 50%),
+                linear-gradient(180deg, rgba(11, 15, 23, 0.88) 0%, rgba(11, 15, 23, 0.95) 100%),
+                url('https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=2400&q=85') center/cover no-repeat fixed !important;
+            background-color: #0B0F17 !important;
+            color: #F8FAFC !important;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -1162,7 +1163,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
         .vault-status-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(4, 1fr);
             gap: 1.1rem;
             flex-shrink: 0;
         }
@@ -1341,6 +1342,24 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             font-family: 'JetBrains Mono', monospace;
             border: 1px solid var(--border-gold);
         }
+        /* SecureVault Enterprise Object Storage Modal styling */
+        .vault-modal-container, #storageModal, .storage-view-overlay, .vault-modal, .vault-modal-overlay {
+            background: 
+                radial-gradient(circle at 80% 20%, rgba(245, 158, 11, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 20% 80%, rgba(30, 58, 138, 0.12) 0%, transparent 50%),
+                linear-gradient(180deg, rgba(11, 15, 23, 0.88) 0%, rgba(11, 15, 23, 0.95) 100%),
+                url('https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=2400&q=85') center/cover no-repeat fixed !important;
+            background-color: #0B0F17 !important;
+        }
+
+        /* Internal Cards Glassmorphism */
+        .storage-card, .vault-directory-box, .preview-payload-box, .vault-status-card, .vault-file-list, .vault-file-preview {
+            background: rgba(17, 24, 39, 0.85) !important;
+            backdrop-filter: blur(16px) !important;
+            -webkit-backdrop-filter: blur(16px) !important;
+            border: 1px solid rgba(245, 158, 11, 0.18) !important;
+        }
+
     </style>
 </head>
 <body>
@@ -1359,7 +1378,15 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
             <div class="form-group">
                 <label>Master Security Credential</label>
-                <input type="password" id="authPassword" class="form-control" placeholder="Enter Nextcloud password">
+                <div style="position: relative; display: flex; align-items: center; width: 100%;">
+                    <input type="password" id="authPassword" class="form-control" style="width: 100%; padding-right: 42px;" placeholder="Enter Nextcloud password">
+                    <button type="button" id="togglePasswordBtn" onclick="togglePasswordVisibility()" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: #64748B; font-size: 18px; display: flex; align-items: center; justify-content: center; padding: 4px;" aria-label="Toggle password visibility">
+                        <svg id="eyeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             <div class="auth-hint" style="margin-bottom: 1.6rem; line-height: 1.4;">
@@ -1374,9 +1401,51 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
     <!-- Top Navigation -->
     <nav class="navbar">
-        <a href="/dashboard" class="brand">
-            <div class="brand-icon">🛡️</div>
-            <div class="brand-text">Secure<span>Vault</span></div>
+        <a href="/dashboard" class="brand" style="text-decoration: none;">
+            <div style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+                <!-- Realistic 3D Cyber Vault Shield -->
+                <svg width="36" height="40" viewBox="0 0 36 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 2px 8px rgba(245, 158, 11, 0.35));">
+                    <defs>
+                        <!-- Metallic Outer Shield Gradient -->
+                        <linearGradient id="shieldMetal" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#FDE68A" />
+                            <stop offset="35%" stop-color="#F59E0B" />
+                            <stop offset="70%" stop-color="#D97706" />
+                            <stop offset="100%" stop-color="#78350F" />
+                        </linearGradient>
+                        <!-- Bevel Inner Shadow Gradient -->
+                        <linearGradient id="innerBevel" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#1E293B" />
+                            <stop offset="100%" stop-color="#0F172A" />
+                        </linearGradient>
+                        <!-- Core Vault Glow -->
+                        <radialGradient id="coreVaultGlow" cx="50%" cy="45%" r="60%">
+                            <stop offset="0%" stop-color="#FBBF24" />
+                            <stop offset="70%" stop-color="#D97706" />
+                            <stop offset="100%" stop-color="#92400E" />
+                        </radialGradient>
+                    </defs>
+                    
+                    <!-- Outer Shield Crest -->
+                    <path d="M18 1.5 L33 6.5 V18 C33 28.5 26.5 35.8 18 38.5 C9.5 35.8 3 28.5 3 18 V6.5 L18 1.5 Z" 
+                          fill="url(#shieldMetal)" stroke="#FDE68A" stroke-width="0.75" />
+                    
+                    <!-- Inner Dark Bevel Recess -->
+                    <path d="M18 4.2 L30.2 8.2 V17.8 C30.2 26.5 24.8 32.8 18 35.2 C11.2 32.8 5.8 26.5 5.8 17.8 V8.2 L18 4.2 Z" 
+                          fill="url(#innerBevel)" stroke="rgba(245, 158, 11, 0.3)" stroke-width="0.8" />
+                    
+                    <!-- Center Vault Core Ring -->
+                    <circle cx="18" cy="18" r="7.5" fill="#0B0F17" stroke="url(#shieldMetal)" stroke-width="1.5" />
+                    
+                    <!-- Heavy Solid Vault Lock / Keyhole Core -->
+                    <path d="M18 13.5 C16.2 13.5 14.8 14.9 14.8 16.7 C14.8 17.8 15.4 18.8 16.3 19.3 L15.8 22.8 H20.2 L19.7 19.3 C20.6 18.8 21.2 17.8 21.2 16.7 C21.2 14.9 19.8 13.5 18 13.5 Z" 
+                          fill="url(#coreVaultGlow)" />
+                </svg>
+
+                <span style="font-size: 1.35rem; font-weight: 700; color: #FFFFFF; letter-spacing: -0.02em;">
+                    SecureVault <span style="font-weight: 400; color: #F59E0B; margin-left: 6px;">| Enterprise AI</span>
+                </span>
+            </div>
         </a>
         <div class="nav-right">
             <div class="status-pill">
@@ -1675,8 +1744,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                         <span class="val">AWS S3 Primary &bull; SSE-KMS</span>
                     </div>
                     <div class="vault-status-card">
-                        <span class="label">Zero-Trust Directory</span>
-                        <span class="val" id="modalDirectoryPath">/remote.php/dav/files/...</span>
+                        <span class="label">Logged Operator</span>
+                        <span class="val" id="modalLoggedOperator">Pranali</span>
+                    </div>
+                    <div class="vault-status-card">
+                        <span class="label">Active Vault Path</span>
+                        <span class="val" id="modalDirectoryPath" style="font-size: 0.85rem; word-break: break-all;">/remote.php/dav/files/...</span>
                     </div>
                     <div class="vault-status-card">
                         <span class="label">WebDAV Sync Status</span>
@@ -1748,7 +1821,7 @@ Sanitized document content ready.
                         <span> Want to open full Nextcloud web interface? Launch via:</span>
                     </div>
                     <div style="display: flex; gap: 0.6rem; align-items: center;">
-                        <a href="https://localhost/apps/files/" target="_blank" class="btn-nav" style="background: var(--gold-gradient); color: #08090C; font-weight: 700; border: none; padding: 0.45rem 0.95rem; font-size: 0.8rem; border-radius: 6px; text-decoration: none;">Launch https://localhost ➔</a>
+                        <a href="https://localhost/index.php/apps/files/?dir=/SecureVault_Sanitized_Docs" target="_blank" id="launchNextcloudBtn" class="btn-nav" style="background: var(--gold-gradient); color: #08090C; font-weight: 700; border: none; padding: 0.45rem 0.95rem; font-size: 0.8rem; border-radius: 6px; text-decoration: none;">🚀 Open My Isolated Vault</a>
                     </div>
                 </div>
             </div>
@@ -1779,9 +1852,30 @@ Sanitized document content ready.
             const authUser = sessionStorage.getItem('securevault_auth_user');
             if (authUser) {
                 unlockDashboard(authUser);
+                initDropzone();
+            } else {
+                window.location.href = '/?login=true';
             }
-            initDropzone();
         });
+
+        function togglePasswordVisibility() {
+            const passInput = document.getElementById('authPassword');
+            const eyeIcon = document.getElementById('eyeIcon');
+            
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                eyeIcon.innerHTML = `
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                `;
+            } else {
+                passInput.type = 'password';
+                eyeIcon.innerHTML = `
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                `;
+            }
+        }
 
         async function handleLogin() {
             const u = document.getElementById('authUsername').value.trim();
@@ -2182,6 +2276,14 @@ Sanitized document content ready.
                     // Update directory path text
                     const dirEl = document.getElementById('modalDirectoryPath');
                     if (dirEl) dirEl.innerText = `/remote.php/dav/files/${u}/SecureVault_Sanitized_Docs/`;
+                    
+                    const opEl = document.getElementById('modalLoggedOperator');
+                    if (opEl) opEl.innerText = u;
+
+                    const launchBtn = document.getElementById('launchNextcloudBtn');
+                    if (launchBtn) {
+                        launchBtn.href = `https://${encodeURIComponent(u)}:${encodeURIComponent(p)}@localhost/index.php/apps/files/?dir=/SecureVault_Sanitized_Docs`;
+                    }
                     
                     // Build file list for the sidebar
                     const sidebar = document.querySelector('.vault-sidebar');

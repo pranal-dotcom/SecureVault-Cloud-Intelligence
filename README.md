@@ -108,7 +108,14 @@ docker compose logs -f
   docker compose restart
   ```
 
+
 - **Graceful Shutdown:**
   ```bash
   docker compose down
   ```
+
+---
+
+## 🔗 Project Link
+
+[SecureVault-Cloud-Intelligence on GitHub](https://github.com/pranal-dotcom/SecureVault-Cloud-Intelligence)
