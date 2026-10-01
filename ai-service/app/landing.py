@@ -3,7 +3,7 @@ LANDING_HTML = """
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>SecureVault - Enterprise Document Intelligence</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -429,7 +429,20 @@ LANDING_HTML = """
             transition: bottom 0.3s; z-index: 3000; box-shadow: 0 10px 25px rgba(0,0,0,0.3);
         }
         .toast.show { bottom: 32px; }
-
+        @media (max-width: 768px) {
+            .hero { flex-direction: column; padding: 2rem 1.5rem; gap: 2rem; margin: 2rem auto; }
+            .hero-title { font-size: 2.2rem; }
+            .top-nav { flex-direction: column; gap: 1rem; padding: 1rem; }
+            .nav-actions { width: 100%; justify-content: center; }
+            .btn-primary, .btn-secondary, .btn-nav-primary, .btn-nav-outline {
+                width: 100%; text-align: center; justify-content: center; min-height: 44px;
+            }
+            .nav-links { flex-wrap: wrap; justify-content: center; gap: 1rem; }
+            .features-grid { grid-template-columns: 1fr; padding: 1.5rem; }
+            .feature-card { padding: 1.5rem; }
+            .pipeline-card { padding: 1.5rem; }
+            .modal-content { width: 90%; margin: 2rem auto; }
+        }
     </style>
 </head>
 <body>
@@ -492,7 +505,29 @@ LANDING_HTML = """
     <section class="hero">
         <div class="hero-content">
             <div class="eyebrow-badge">
-                <span>🔒</span> Zero-Trust Document Intelligence
+                <svg width="20" height="22" viewBox="0 0 36 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.45)); vertical-align: middle; margin-right: 6px;">
+                  <defs>
+                    <linearGradient id="badgeShieldMetal" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#FDE68A" />
+                      <stop offset="35%" stop-color="#F59E0B" />
+                      <stop offset="70%" stop-color="#D97706" />
+                      <stop offset="100%" stop-color="#78350F" />
+                    </linearGradient>
+                    <linearGradient id="badgeInnerBevel" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stop-color="#1E293B" />
+                      <stop offset="100%" stop-color="#0F172A" />
+                    </linearGradient>
+                    <radialGradient id="badgeCoreVaultGlow" cx="50%" cy="45%" r="60%">
+                      <stop offset="0%" stop-color="#FBBF24" />
+                      <stop offset="70%" stop-color="#D97706" />
+                      <stop offset="100%" stop-color="#92400E" />
+                    </radialGradient>
+                  </defs>
+                  <path d="M18 1.5 L33 6.5 V18 C33 28.5 26.5 35.8 18 38.5 C9.5 35.8 3 28.5 3 18 V6.5 L18 1.5 Z" fill="url(#badgeShieldMetal)" stroke="#FDE68A" stroke-width="0.75" />
+                  <path d="M18 4.2 L30.2 8.2 V17.8 C30.2 26.5 24.8 32.8 18 35.2 C11.2 32.8 5.8 26.5 5.8 17.8 V8.2 L18 4.2 Z" fill="url(#badgeInnerBevel)" stroke="rgba(245, 158, 11, 0.3)" stroke-width="0.8" />
+                  <circle cx="18" cy="18" r="7.5" fill="#0B0F17" stroke="url(#badgeShieldMetal)" stroke-width="1.5" />
+                  <path d="M18 13.5 C16.2 13.5 14.8 14.9 14.8 16.7 C14.8 17.8 15.4 18.8 16.3 19.3 L15.8 22.8 H20.2 L19.7 19.3 C20.6 18.8 21.2 17.8 21.2 16.7 C21.2 14.9 19.8 13.5 18 13.5 Z" fill="url(#badgeCoreVaultGlow)" />
+                </svg> Zero-Trust Document Intelligence
             </div>
             <h1 class="hero-title">
                 Your Documents, Sanitized.<br>

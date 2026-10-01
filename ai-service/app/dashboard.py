@@ -7,7 +7,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>SecureVault - Enterprise Document Intelligence & PII Engine</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1359,7 +1359,38 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             -webkit-backdrop-filter: blur(16px) !important;
             border: 1px solid rgba(245, 158, 11, 0.18) !important;
         }
-
+        @media (max-width: 768px) {
+            .navbar { flex-direction: column; padding: 1rem; gap: 1rem; }
+            .nav-right { flex-direction: column; width: 100%; gap: 1rem; }
+            .status-pill, .user-badge { width: 100%; justify-content: center; }
+            .main-container { padding: 1rem 0.5rem 3rem; }
+            
+            /* Responsive Stepper */
+            .stepper { flex-wrap: wrap; gap: 1rem; justify-content: center; }
+            .step-item { width: 45%; }
+            .stepper-line-bg, .stepper-line-fill { display: none; }
+            
+            /* Buttons touch targets */
+            .btn-nav, .btn-nav-primary, .btn-vault-action, .btn-auth-submit {
+                width: 100%; min-height: 48px; justify-content: center; text-align: center; margin-bottom: 0.5rem;
+            }
+            .step-controls { flex-direction: column; gap: 1rem; }
+            .commit-actions { display: flex; flex-direction: column; width: 100%; gap: 0.5rem; }
+            
+            /* Modal and layout fixes */
+            .vault-explorer-layout { flex-direction: column; }
+            .vault-file-list { width: 100%; border-right: none; border-bottom: 1px solid var(--border-gold); }
+            .vault-status-grid { grid-template-columns: 1fr; }
+            .vault-modal { width: 95%; max-height: 90vh; }
+            
+            /* Typography scaling */
+            .card-title-group h2 { font-size: 1.25rem; }
+            .auth-card { width: 90%; padding: 1.5rem; margin: auto; }
+            
+            /* Elements wrapping */
+            .samples-strip { flex-direction: column; align-items: stretch; gap: 0.5rem; }
+            .tabs-header { flex-direction: column; }
+        }
     </style>
 </head>
 <body>
@@ -1367,7 +1398,31 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <!-- Zero-Trust Authentication Gate Screen -->
     <div class="auth-gate-overlay" id="authGate">
         <div class="auth-card">
-            <div class="auth-icon-wrapper">🛡️</div>
+            <div class="auth-icon-wrapper">
+                <svg width="32" height="34" viewBox="0 0 36 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.45)); vertical-align: middle;">
+                  <defs>
+                    <linearGradient id="modalShieldMetal" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#FDE68A" />
+                      <stop offset="35%" stop-color="#F59E0B" />
+                      <stop offset="70%" stop-color="#D97706" />
+                      <stop offset="100%" stop-color="#78350F" />
+                    </linearGradient>
+                    <linearGradient id="modalInnerBevel" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stop-color="#1E293B" />
+                      <stop offset="100%" stop-color="#0F172A" />
+                    </linearGradient>
+                    <radialGradient id="modalCoreVaultGlow" cx="50%" cy="45%" r="60%">
+                      <stop offset="0%" stop-color="#FBBF24" />
+                      <stop offset="70%" stop-color="#D97706" />
+                      <stop offset="100%" stop-color="#92400E" />
+                    </radialGradient>
+                  </defs>
+                  <path d="M18 1.5 L33 6.5 V18 C33 28.5 26.5 35.8 18 38.5 C9.5 35.8 3 28.5 3 18 V6.5 L18 1.5 Z" fill="url(#modalShieldMetal)" stroke="#FDE68A" stroke-width="0.75" />
+                  <path d="M18 4.2 L30.2 8.2 V17.8 C30.2 26.5 24.8 32.8 18 35.2 C11.2 32.8 5.8 26.5 5.8 17.8 V8.2 L18 4.2 Z" fill="url(#modalInnerBevel)" stroke="rgba(245, 158, 11, 0.3)" stroke-width="0.8" />
+                  <circle cx="18" cy="18" r="7.5" fill="#0B0F17" stroke="url(#modalShieldMetal)" stroke-width="1.5" />
+                  <path d="M18 13.5 C16.2 13.5 14.8 14.9 14.8 16.7 C14.8 17.8 15.4 18.8 16.3 19.3 L15.8 22.8 H20.2 L19.7 19.3 C20.6 18.8 21.2 17.8 21.2 16.7 C21.2 14.9 19.8 13.5 18 13.5 Z" fill="url(#modalCoreVaultGlow)" />
+                </svg>
+            </div>
             <h2>SecureVault Access Gate</h2>
             <p>Zero-Trust Authentication required to access the AI Document Intelligence & Redaction Pipeline.</p>
 
@@ -1455,10 +1510,30 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             <div class="user-badge" id="userBadge">
                 <span>Operator:</span>
                 <strong id="sessionUserName">admin</strong>
-                <button class="btn-logout" onclick="handleLogout()" title="Lock Session">🔒 Lock</button>
+                <button class="btn-logout" onclick="handleLogout()" title="Lock Session">
+                    <svg width="14" height="14" viewBox="0 0 36 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.45)); vertical-align: middle; margin-right: 4px; margin-top: -2px;">
+                      <defs>
+                        <linearGradient id="btnShieldMetal" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stop-color="#FDE68A" />
+                          <stop offset="35%" stop-color="#F59E0B" />
+                          <stop offset="70%" stop-color="#D97706" />
+                          <stop offset="100%" stop-color="#78350F" />
+                        </linearGradient>
+                        <radialGradient id="btnCoreVaultGlow" cx="50%" cy="45%" r="60%">
+                          <stop offset="0%" stop-color="#FBBF24" />
+                          <stop offset="70%" stop-color="#D97706" />
+                          <stop offset="100%" stop-color="#92400E" />
+                        </radialGradient>
+                      </defs>
+                      <path d="M18 1.5 L33 6.5 V18 C33 28.5 26.5 35.8 18 38.5 C9.5 35.8 3 28.5 3 18 V6.5 L18 1.5 Z" fill="url(#btnShieldMetal)" stroke="#FDE68A" stroke-width="0.75" />
+                      <circle cx="18" cy="18" r="7.5" fill="#0B0F17" stroke="url(#btnShieldMetal)" stroke-width="1.5" />
+                      <path d="M18 13.5 C16.2 13.5 14.8 14.9 14.8 16.7 C14.8 17.8 15.4 18.8 16.3 19.3 L15.8 22.8 H20.2 L19.7 19.3 C20.6 18.8 21.2 17.8 21.2 16.7 C21.2 14.9 19.8 13.5 18 13.5 Z" fill="url(#btnCoreVaultGlow)" />
+                    </svg>
+                    Lock
+                </button>
             </div>
             <a href="/ai-api/docs" target="_blank" class="nav-link-btn">Swagger API</a>
-            <button onclick="openNextcloudVault()" class="nav-link-btn" style="background:transparent; cursor:pointer; font-family: inherit;">Nextcloud Vault</button>
+            <a href="/ai-api/vault-bridge" onclick="this.href='/ai-api/vault-bridge?u='+encodeURIComponent(sessionStorage.getItem('securevault_auth_user')||'')+'&p='+encodeURIComponent(sessionStorage.getItem('securevault_auth_pass')||'');" target="_blank" class="vault-direct-btn" style="color: #f59e0b; font-weight: 600; text-decoration: none; padding: 0.5rem 1rem; border: 1px solid #f59e0b; border-radius: 6px;">🚀 Nextcloud Vault</a>
         </div>
     </nav>
 
@@ -1619,7 +1694,26 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
                 <!-- PII Category Badges -->
                 <div class="pii-breakdown-bar" id="piiBreakdownContainer">
-                    <div class="pii-tag-count">🔒 0 Redactions Performed</div>
+                    <div class="pii-tag-count">
+                        <svg width="14" height="14" viewBox="0 0 36 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.45)); vertical-align: middle; margin-right: 4px; margin-top: -2px;">
+                          <defs>
+                            <linearGradient id="tagShieldMetal" x1="0%" y1="0%" x2="100%" y2="100%">
+                              <stop offset="0%" stop-color="#FDE68A" />
+                              <stop offset="35%" stop-color="#F59E0B" />
+                              <stop offset="70%" stop-color="#D97706" />
+                              <stop offset="100%" stop-color="#78350F" />
+                            </linearGradient>
+                            <radialGradient id="tagCoreVaultGlow" cx="50%" cy="45%" r="60%">
+                              <stop offset="0%" stop-color="#FBBF24" />
+                              <stop offset="70%" stop-color="#D97706" />
+                              <stop offset="100%" stop-color="#92400E" />
+                            </radialGradient>
+                          </defs>
+                          <path d="M18 1.5 L33 6.5 V18 C33 28.5 26.5 35.8 18 38.5 C9.5 35.8 3 28.5 3 18 V6.5 L18 1.5 Z" fill="url(#tagShieldMetal)" stroke="#FDE68A" stroke-width="0.75" />
+                          <circle cx="18" cy="18" r="7.5" fill="#0B0F17" stroke="url(#tagShieldMetal)" stroke-width="1.5" />
+                          <path d="M18 13.5 C16.2 13.5 14.8 14.9 14.8 16.7 C14.8 17.8 15.4 18.8 16.3 19.3 L15.8 22.8 H20.2 L19.7 19.3 C20.6 18.8 21.2 17.8 21.2 16.7 C21.2 14.9 19.8 13.5 18 13.5 Z" fill="url(#tagCoreVaultGlow)" />
+                        </svg> 0 Redactions Performed
+                    </div>
                 </div>
 
                 <!-- Side-by-Side Comparison -->
@@ -1636,7 +1730,32 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                     <!-- Right: Redacted -->
                     <div class="panel" style="border-color: var(--gold-500); box-shadow: 0 0 16px var(--gold-glow-subtle);">
                         <div class="panel-header" style="background: rgba(212, 175, 55, 0.12);">
-                            <span style="color: var(--gold-300);">🛡️ Sanitized & Redacted Output</span>
+                            <span style="color: var(--gold-300);">
+                                <svg width="18" height="18" viewBox="0 0 36 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.45)); vertical-align: middle; margin-right: 4px;">
+                                  <defs>
+                                    <linearGradient id="modalShieldMetal" x1="0%" y1="0%" x2="100%" y2="100%">
+                                      <stop offset="0%" stop-color="#FDE68A" />
+                                      <stop offset="35%" stop-color="#F59E0B" />
+                                      <stop offset="70%" stop-color="#D97706" />
+                                      <stop offset="100%" stop-color="#78350F" />
+                                    </linearGradient>
+                                    <linearGradient id="modalInnerBevel" x1="0%" y1="0%" x2="0%" y2="100%">
+                                      <stop offset="0%" stop-color="#1E293B" />
+                                      <stop offset="100%" stop-color="#0F172A" />
+                                    </linearGradient>
+                                    <radialGradient id="modalCoreVaultGlow" cx="50%" cy="45%" r="60%">
+                                      <stop offset="0%" stop-color="#FBBF24" />
+                                      <stop offset="70%" stop-color="#D97706" />
+                                      <stop offset="100%" stop-color="#92400E" />
+                                    </radialGradient>
+                                  </defs>
+                                  <path d="M18 1.5 L33 6.5 V18 C33 28.5 26.5 35.8 18 38.5 C9.5 35.8 3 28.5 3 18 V6.5 L18 1.5 Z" fill="url(#modalShieldMetal)" stroke="#FDE68A" stroke-width="0.75" />
+                                  <path d="M18 4.2 L30.2 8.2 V17.8 C30.2 26.5 24.8 32.8 18 35.2 C11.2 32.8 5.8 26.5 5.8 17.8 V8.2 L18 4.2 Z" fill="url(#modalInnerBevel)" stroke="rgba(245, 158, 11, 0.3)" stroke-width="0.8" />
+                                  <circle cx="18" cy="18" r="7.5" fill="#0B0F17" stroke="url(#modalShieldMetal)" stroke-width="1.5" />
+                                  <path d="M18 13.5 C16.2 13.5 14.8 14.9 14.8 16.7 C14.8 17.8 15.4 18.8 16.3 19.3 L15.8 22.8 H20.2 L19.7 19.3 C20.6 18.8 21.2 17.8 21.2 16.7 C21.2 14.9 19.8 13.5 18 13.5 Z" fill="url(#modalCoreVaultGlow)" />
+                                </svg>
+                                Sanitized & Redacted Output
+                            </span>
                             <button class="btn-nav" style="padding: 0.2rem 0.55rem; font-size: 0.75rem;" onclick="copyElementText('diffRedactedText')">Copy</button>
                         </div>
                         <div class="panel-body" id="diffRedactedText">No data</div>
@@ -1711,7 +1830,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                     <div class="commit-actions">
                         <button class="btn-nav" onclick="downloadSanitizedFile()">📥 Download Sanitized File</button>
                         <button class="btn-nav" id="btnManualSync" onclick="triggerVaultCommit()" style="background: var(--gold-gradient); color: #08090C; font-weight: 700; border: none; padding: 0.65rem 1.25rem; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 0.45rem; box-shadow: 0 0 16px var(--gold-glow);">⚡ Re-Sync to WebDAV</button>
-                        <button class="btn-vault-action" id="nextcloudVaultLink" onclick="openNextcloudVault()" style="border: none; cursor: pointer;">📂 Access Nextcloud Vault</button>
+                        <button class="btn-vault-action" id="nextcloudVaultLink" onclick="openNextcloudVault()" style="border: none; cursor: pointer;">📂 View in Vault Modal</button>
                         <button class="btn-nav" onclick="resetPipeline()">🔄 Process Another Document</button>
                     </div>
                 </div>
@@ -1732,7 +1851,32 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <div class="vault-modal-overlay" id="vaultModalOverlay" onclick="handleVaultOverlayClick(event)">
         <div class="vault-modal" id="vaultModalContent">
             <div class="vault-modal-header">
-                <h3>🛡️ SecureVault Enterprise Object Storage & Nextcloud Vault</h3>
+                <h3>
+                    <svg width="24" height="26" viewBox="0 0 36 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.45)); vertical-align: middle; margin-right: 8px;">
+                      <defs>
+                        <linearGradient id="ncModalShieldMetal" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stop-color="#FDE68A" />
+                          <stop offset="35%" stop-color="#F59E0B" />
+                          <stop offset="70%" stop-color="#D97706" />
+                          <stop offset="100%" stop-color="#78350F" />
+                        </linearGradient>
+                        <linearGradient id="ncModalInnerBevel" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" stop-color="#1E293B" />
+                          <stop offset="100%" stop-color="#0F172A" />
+                        </linearGradient>
+                        <radialGradient id="ncModalCoreVaultGlow" cx="50%" cy="45%" r="60%">
+                          <stop offset="0%" stop-color="#FBBF24" />
+                          <stop offset="70%" stop-color="#D97706" />
+                          <stop offset="100%" stop-color="#92400E" />
+                        </radialGradient>
+                      </defs>
+                      <path d="M18 1.5 L33 6.5 V18 C33 28.5 26.5 35.8 18 38.5 C9.5 35.8 3 28.5 3 18 V6.5 L18 1.5 Z" fill="url(#ncModalShieldMetal)" stroke="#FDE68A" stroke-width="0.75" />
+                      <path d="M18 4.2 L30.2 8.2 V17.8 C30.2 26.5 24.8 32.8 18 35.2 C11.2 32.8 5.8 26.5 5.8 17.8 V8.2 L18 4.2 Z" fill="url(#ncModalInnerBevel)" stroke="rgba(245, 158, 11, 0.3)" stroke-width="0.8" />
+                      <circle cx="18" cy="18" r="7.5" fill="#0B0F17" stroke="url(#ncModalShieldMetal)" stroke-width="1.5" />
+                      <path d="M18 13.5 C16.2 13.5 14.8 14.9 14.8 16.7 C14.8 17.8 15.4 18.8 16.3 19.3 L15.8 22.8 H20.2 L19.7 19.3 C20.6 18.8 21.2 17.8 21.2 16.7 C21.2 14.9 19.8 13.5 18 13.5 Z" fill="url(#ncModalCoreVaultGlow)" />
+                    </svg>
+                    SecureVault Enterprise Object Storage & Nextcloud Vault
+                </h3>
                 <button class="vault-modal-close" onclick="closeNextcloudVault()" title="Close Explorer">✕</button>
             </div>
             
@@ -1821,7 +1965,7 @@ Sanitized document content ready.
                         <span> Want to open full Nextcloud web interface? Launch via:</span>
                     </div>
                     <div style="display: flex; gap: 0.6rem; align-items: center;">
-                        <a href="https://localhost/index.php/apps/files/?dir=/SecureVault_Sanitized_Docs" target="_blank" id="launchNextcloudBtn" class="btn-nav" style="background: var(--gold-gradient); color: #08090C; font-weight: 700; border: none; padding: 0.45rem 0.95rem; font-size: 0.8rem; border-radius: 6px; text-decoration: none;">🚀 Open My Isolated Vault</a>
+                        <a href="/ai-api/vault-bridge" onclick="this.href='/ai-api/vault-bridge?u='+encodeURIComponent(sessionStorage.getItem('securevault_auth_user')||'')+'&p='+encodeURIComponent(sessionStorage.getItem('securevault_auth_pass')||'');" target="_blank" id="launchNextcloudBtn" class="vault-direct-btn" style="background: var(--gold-gradient); color: #08090C; font-weight: 700; border: none; padding: 0.45rem 0.95rem; font-size: 0.8rem; border-radius: 6px; text-decoration: none;">🚀 Access My Isolated Storage Vault</a>
                     </div>
                 </div>
             </div>
@@ -1919,6 +2063,7 @@ Sanitized document content ready.
         }
 
         function handleLogout() {
+            fetch('/ai-api/vault-logout', { method: 'POST' }).catch(console.error);
             sessionStorage.removeItem('securevault_auth_user');
             sessionStorage.removeItem('securevault_auth_pass');
             document.getElementById('authGate').style.display = 'flex';
@@ -2164,7 +2309,24 @@ Sanitized document content ready.
             mainBadge.style.background = totalRedactions > 0 ? 'rgba(212, 175, 55, 0.18)' : 'rgba(212, 175, 55, 0.08)';
             mainBadge.style.color = totalRedactions > 0 ? '#F5D77F' : '#F3E5AB';
             mainBadge.style.borderColor = totalRedactions > 0 ? '#D4AF37' : 'rgba(212, 175, 55, 0.4)';
-            mainBadge.innerText = `🔒 ${totalRedactions} Sensitive Items Redacted`;
+            mainBadge.innerHTML = `<svg width="14" height="14" viewBox="0 0 36 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.45)); vertical-align: middle; margin-right: 4px; margin-top: -2px;">
+                          <defs>
+                            <linearGradient id="jsShieldMetal" x1="0%" y1="0%" x2="100%" y2="100%">
+                              <stop offset="0%" stop-color="#FDE68A" />
+                              <stop offset="35%" stop-color="#F59E0B" />
+                              <stop offset="70%" stop-color="#D97706" />
+                              <stop offset="100%" stop-color="#78350F" />
+                            </linearGradient>
+                            <radialGradient id="jsCoreVaultGlow" cx="50%" cy="45%" r="60%">
+                              <stop offset="0%" stop-color="#FBBF24" />
+                              <stop offset="70%" stop-color="#D97706" />
+                              <stop offset="100%" stop-color="#92400E" />
+                            </radialGradient>
+                          </defs>
+                          <path d="M18 1.5 L33 6.5 V18 C33 28.5 26.5 35.8 18 38.5 C9.5 35.8 3 28.5 3 18 V6.5 L18 1.5 Z" fill="url(#jsShieldMetal)" stroke="#FDE68A" stroke-width="0.75" />
+                          <circle cx="18" cy="18" r="7.5" fill="#0B0F17" stroke="url(#jsShieldMetal)" stroke-width="1.5" />
+                          <path d="M18 13.5 C16.2 13.5 14.8 14.9 14.8 16.7 C14.8 17.8 15.4 18.8 16.3 19.3 L15.8 22.8 H20.2 L19.7 19.3 C20.6 18.8 21.2 17.8 21.2 16.7 C21.2 14.9 19.8 13.5 18 13.5 Z" fill="url(#jsCoreVaultGlow)" />
+                        </svg> ${totalRedactions} Sensitive Items Redacted`;
             piiBar.appendChild(mainBadge);
 
             const categories = piiSummary.categories || {};
@@ -2261,14 +2423,15 @@ Sanitized document content ready.
             showToast("Fetching your isolated Nextcloud vault...");
             
             try {
-                const res = await fetch('/ai-api/vault/files', {
+                // Fetch file list for preview
+                const resFiles = await fetch('/ai-api/vault/files', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username: u, password: p })
                 });
                 
-                if (res.ok) {
-                    const data = await res.json();
+                if (resFiles.ok) {
+                    const data = await resFiles.json();
                     
                     const titleEl = document.getElementById('modalPreviewTitle');
                     const bodyEl = document.getElementById('modalPreviewBody');
@@ -2282,7 +2445,7 @@ Sanitized document content ready.
 
                     const launchBtn = document.getElementById('launchNextcloudBtn');
                     if (launchBtn) {
-                        launchBtn.href = `https://${encodeURIComponent(u)}:${encodeURIComponent(p)}@localhost/index.php/apps/files/?dir=/SecureVault_Sanitized_Docs`;
+                        launchBtn.href = `/ai-api/vault-bridge?u=${encodeURIComponent(u)}&p=${encodeURIComponent(p)}`;
                     }
                     
                     // Build file list for the sidebar

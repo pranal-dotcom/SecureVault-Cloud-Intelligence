@@ -2,9 +2,9 @@ import time
 from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException, status
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException, status, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -248,40 +248,104 @@ def list_vault_files(payload: LoginPayload):
         elif resp.status_code not in (200, 207):
             raise HTTPException(status_code=401, detail="Invalid credentials or unauthorized.")
             
-        # Parse WebDAV XML response
         root = ET.fromstring(resp.content)
+        # Process WebDAV XML to get file list...
         files = []
-        # XML namespaces for WebDAV
-        namespaces = {'d': 'DAV:'}
-        
-        for response in root.findall('d:response', namespaces):
-            href = response.find('d:href', namespaces)
-            if href is not None:
-                path = href.text
-                # Skip the directory itself
-                if path.endswith(f"/{folder_name}/"):
-                    continue
+        for response in root.findall(".//{DAV:}response"):
+            href = response.find("{DAV:}href").text
+            if href.endswith("/"): 
+                continue
+            name = href.split("/")[-1]
+            prop = response.find(".//{DAV:}prop")
+            if prop:
+                length_el = prop.find("{DAV:}getcontentlength")
+                length = int(length_el.text) if length_el is not None and length_el.text else 0
+                files.append({"name": name, "size": length})
                 
-                filename = path.split('/')[-1]
-                
-                # Get file size and last modified (if needed)
-                propstat = response.find('d:propstat', namespaces)
-                size = 0
-                if propstat is not None:
-                    prop = propstat.find('d:prop', namespaces)
-                    if prop is not None:
-                        getcontentlength = prop.find('d:getcontentlength', namespaces)
-                        if getcontentlength is not None and getcontentlength.text:
-                            size = int(getcontentlength.text)
-                
-                if filename:
-                    files.append({"name": filename, "size": size})
-                    
         return {"status": "success", "files": files}
     except Exception as e:
         if isinstance(e, HTTPException):
             raise e
-        raise HTTPException(status_code=500, detail=f"Failed to fetch files: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/vault-bridge")
+@app.get("/ai-api/vault-bridge")
+def vault_bridge(u: str, p: str):
+    """
+    Acts as a Session-Bridge / SSO route to Nextcloud.
+    Logs in to Nextcloud on behalf of the user, grabs session cookies,
+    and redirects the browser directly to their dedicated vault.
+    """
+    import os
+    import requests
+    import re
+    
+    nc_host = os.getenv("NEXTCLOUD_HOST", "nextcloud")
+    session = requests.Session()
+    
+    try:
+        # 1. Fetch the Nextcloud login page to grab the CSRF requesttoken
+        login_page = session.get(f"http://{nc_host}/index.php/login", timeout=5)
+        
+        match = re.search(r'data-requesttoken="([^"]+)"', login_page.text)
+        if not match:
+            raise HTTPException(status_code=500, detail="Could not extract Nextcloud CSRF token for vault bridge.")
+        
+        req_token = match.group(1)
+        
+        # 2. Submit the login form to Nextcloud
+        login_data = {
+            "user": u,
+            "password": p,
+            "timezone-offset": "0",
+            "timezone": "UTC",
+            "requesttoken": req_token
+        }
+        
+        login_resp = session.post(f"http://{nc_host}/index.php/login", data=login_data, allow_redirects=False, timeout=8)
+        
+        if login_resp.status_code not in (302, 303):
+            raise HTTPException(status_code=401, detail="Vault Bridge authentication failed. Invalid credentials.")
+            
+        # 3. Create RedirectResponse to the user's isolated workspace
+        response = RedirectResponse(url="/index.php/apps/files/?dir=/SecureVault_Sanitized_Docs", status_code=302)
+        
+        # Invalidate old known session cookies just in case
+        response.delete_cookie("nc_session_id", path="/")
+        response.delete_cookie("oc_sessionPassphrase", path="/")
+        response.delete_cookie("nc_sameSiteCookielax", path="/")
+        response.delete_cookie("nc_sameSiteCookiestrict", path="/")
+        
+        # 4. Proxy the new Nextcloud session cookies to the client
+        for cookie in session.cookies:
+            response.set_cookie(
+                key=cookie.name,
+                value=cookie.value,
+                path="/",
+                httponly=cookie.has_nonstandard_attr('HttpOnly'),
+                secure=True,
+                samesite="Lax"
+            )
+            
+        return response
+        
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(status_code=500, detail=f"Vault Bridge error: {str(e)}")
+
+@app.post("/vault-logout")
+@app.post("/ai-api/vault-logout")
+def vault_logout(response: Response):
+    """
+    Clears Nextcloud session cookies to enforce zero-trust session boundaries on SecureVault logout.
+    """
+    response.delete_cookie("nc_session_id", path="/")
+    response.delete_cookie("oc_sessionPassphrase", path="/")
+    response.delete_cookie("nc_sameSiteCookielax", path="/")
+    response.delete_cookie("nc_sameSiteCookiestrict", path="/")
+    return {"status": "success", "message": "Vault sessions cleared"}
+
 
 @app.post("/analyze/text")
 @app.post("/ai-api/analyze/text")
