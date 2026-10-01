@@ -404,7 +404,7 @@ def commit_to_vault(payload: VaultCommitPayload):
                 "webdav_url": root_webdav_url,
                 "folder_webdav_url": folder_webdav_url,
                 "vault_path": vault_rel_path,
-                "nextcloud_url": "https://localhost/index.php/apps/files/?dir=/SecureVault_Sanitized_Docs",
+                "nextcloud_url": f"https://{nc_user}:{nc_pass}@localhost/index.php/apps/files/?dir=/SecureVault_Sanitized_Docs",
                 "bytes_written": len(file_bytes),
                 "nextcloud_status_code": resp.status_code,
                 "timestamp": datetime.now(timezone.utc).isoformat()
@@ -418,7 +418,7 @@ def commit_to_vault(payload: VaultCommitPayload):
                 "webdav_url": root_webdav_url,
                 "folder_webdav_url": folder_webdav_url,
                 "vault_path": vault_rel_path,
-                "nextcloud_url": "https://localhost/index.php/apps/files/?dir=/SecureVault_Sanitized_Docs",
+                "nextcloud_url": f"https://{nc_user}:{nc_pass}@localhost/index.php/apps/files/?dir=/SecureVault_Sanitized_Docs",
                 "bytes_written": len(file_bytes),
                 "nextcloud_status_code": resp.status_code,
                 "timestamp": datetime.now(timezone.utc).isoformat()
@@ -433,7 +433,7 @@ def commit_to_vault(payload: VaultCommitPayload):
             "webdav_url": root_webdav_url,
             "folder_webdav_url": folder_webdav_url,
             "vault_path": vault_rel_path,
-            "nextcloud_url": "https://localhost/index.php/apps/files/?dir=/SecureVault_Sanitized_Docs",
+            "nextcloud_url": f"https://{nc_user}:{nc_pass}@localhost/index.php/apps/files/?dir=/SecureVault_Sanitized_Docs",
             "bytes_written": len(file_bytes),
             "nextcloud_status_code": None,
             "timestamp": datetime.now(timezone.utc).isoformat()
