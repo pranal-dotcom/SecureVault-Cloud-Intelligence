@@ -78,6 +78,16 @@ docker compose logs -f
 ```
 
 ---
+### 🔮 Future Roadmap & Enhancements
+
+- [ ] **Multi-Modal Redaction Pipeline (Phase 2):**
+  - **Audio Redaction:** Automatic PII detection in audio streams using Whisper ASR with acoustic tone-bleeping for sensitive credentials (e.g., credit card numbers, OTPs).
+  - **Video PII Masking:** Dynamic bounding-box blurring for faces, government identity cards, and screens detected across video frames using computer vision.
+- [ ] **Enterprise Identity SSO:** Full SAML 2.0 / OAuth2 OpenID Connect integration for automated directory identity federation.
+- [ ] **Custom PII Regex Engine:** User-defined compliance policies for healthcare (HIPAA) and regional data privacy standards.
+      
+
+      
 
 ## 🔒 Architecture & Security Highlights
 
