@@ -112,13 +112,35 @@ def run_ai_tests():
         "All transactions have been secured via AWS KMS and validated by the compliance team."
     )
 
+    import time
+    def poll_compute_task(task_id: str, max_retries: int = 40):
+        for _ in range(max_retries):
+            time.sleep(0.35)
+            try:
+                p_resp = session.get(f"{AI_BASE_URL}/api/compute/status/{task_id}", timeout=10)
+                if p_resp.status_code == 200:
+                    p_data = p_resp.json()
+                    if p_data.get("status") in ("COMMITTED", "FAILED"):
+                        return p_data
+            except Exception:
+                pass
+        return {}
+
     try:
         r2 = session.post(
             f"{AI_BASE_URL}/analyze",
             data={"text": sample_text},
             timeout=15
         )
-        data2 = r2.json() if r2.status_code == 200 else {}
+        if r2.status_code == 202:
+            t_id2 = r2.json().get("task_id", "")
+            telemetry2 = poll_compute_task(t_id2)
+            data2 = telemetry2.get("result", telemetry2)
+        elif r2.status_code == 200:
+            data2 = r2.json()
+        else:
+            data2 = {}
+
         pii_sum = data2.get("pii_summary", {})
         categories = pii_sum.get("categories", {})
         redacted = data2.get("redacted_text", "")
@@ -131,23 +153,24 @@ def run_ai_tests():
         has_cc = "[REDACTED_CREDIT_CARD]" in redacted and categories.get("CREDIT_CARD", 0) >= 1
 
         all_pii_passed = has_aadhaar and has_pan and has_email and has_phone and has_cc
-        passed2 = (r2.status_code == 200 and all_pii_passed)
+        passed2 = ((r2.status_code in (200, 202)) and all_pii_passed)
 
         detail_msg = (
             f"Detected PII Categories: {categories}\n"
             f"         Redacted Text Snippet: {redacted[:140]}...\n"
             f"         Executive Summary: {data2.get('summary', {}).get('executive_summary', '')}"
         )
-        log_result(t2_name, passed2, r2.status_code, "200 OK (All 5 PII entities redacted)", detail_msg)
+        log_result(t2_name, passed2, r2.status_code, "200 OK or 202 Accepted (All 5 PII entities redacted)", detail_msg)
         results.append((t2_name, passed2))
     except Exception as e:
-        log_result(t2_name, False, 0, "200 OK", f"Error: {e}")
+        log_result(t2_name, False, 0, "200/202", f"Error: {e}")
         results.append((t2_name, False))
 
     # --------------------------------------------------------------------------
     # Test 3: Document Upload with OCR -> PII -> Summary Pipeline
     # --------------------------------------------------------------------------
     t3_name = "Test 3: File Upload & Tesseract OCR Pipeline (/ai-api/analyze)"
+    last_task_id = None
     try:
         test_img_bytes = generate_sample_kyc_image()
         files = {
@@ -159,13 +182,21 @@ def run_ai_tests():
             files=files,
             timeout=25
         )
-        data3 = r3.json() if r3.status_code == 200 else {}
+        if r3.status_code == 202:
+            last_task_id = r3.json().get("task_id", "")
+            telemetry3 = poll_compute_task(last_task_id)
+            data3 = telemetry3.get("result", telemetry3)
+        elif r3.status_code == 200:
+            data3 = r3.json()
+        else:
+            data3 = {}
+
         extracted_text = data3.get("original_text", "")
         ocr_redacted = data3.get("redacted_text", "")
         summary3 = data3.get("summary", {})
 
         passed3 = (
-            r3.status_code == 200
+            (r3.status_code in (200, 202))
             and len(extracted_text) > 30
             and data3.get("status") == "success"
             and len(summary3.get("key_highlights", [])) > 0
@@ -177,11 +208,48 @@ def run_ai_tests():
             f"         Key Highlights Found    : {len(summary3.get('key_highlights', []))}\n"
             f"         OCR Redacted Preview    : {ocr_redacted.replace(chr(10), ' ')[:120]}..."
         )
-        log_result(t3_name, passed3, r3.status_code, "200 OK with OCR extracted text", detail_msg)
+        log_result(t3_name, passed3, r3.status_code, "200/202 with OCR extracted text", detail_msg)
         results.append((t3_name, passed3))
     except Exception as e:
-        log_result(t3_name, False, 0, "200 OK", f"Error: {e}")
+        log_result(t3_name, False, 0, "200/202", f"Error: {e}")
         results.append((t3_name, False))
+
+    # --------------------------------------------------------------------------
+    # Test 4: Cloud Compute Pillar Decoupled Telemetry (/api/compute/status/{id})
+    # --------------------------------------------------------------------------
+    t4_name = "Test 4: Cloud Compute Telemetry Metrics (/api/compute/status/{task_id})"
+    try:
+        if not last_task_id:
+            # Trigger a quick task if needed
+            r_trig = session.post(f"{AI_BASE_URL}/analyze", data={"text": "KYC Verification Test"}, timeout=10)
+            last_task_id = r_trig.json().get("task_id")
+            time.sleep(0.5)
+
+        r4 = session.get(f"{AI_BASE_URL}/api/compute/status/{last_task_id}", timeout=10)
+        t4_data = r4.json() if r4.status_code == 200 else {}
+        c_status = t4_data.get("status")
+        c_duration = t4_data.get("compute_duration_ms", -1)
+        c_threads = t4_data.get("cpu_threads_used", 0)
+        c_stage = t4_data.get("stage", "")
+
+        passed4 = (
+            r4.status_code == 200
+            and c_status in ("COMPUTING", "COMMITTED")
+            and c_duration >= 0
+            and c_threads >= 1
+            and c_stage in ("OCR_EXTRACTION", "PII_SANITIZATION", "VAULT_SYNC")
+        )
+        detail_msg = (
+            f"Compute Status   : {c_status}\n"
+            f"         vCPU Duration    : {c_duration} ms\n"
+            f"         vCPU Threads     : {c_threads}\n"
+            f"         Telemetry Stage  : {c_stage}"
+        )
+        log_result(t4_name, passed4, r4.status_code, "200 OK (Telemetry metrics verified)", detail_msg)
+        results.append((t4_name, passed4))
+    except Exception as e:
+        log_result(t4_name, False, 0, "200 OK", f"Error: {e}")
+        results.append((t4_name, False))
 
     # --------------------------------------------------------------------------
     # Summary

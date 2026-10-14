@@ -1,8 +1,9 @@
+import uuid
 import time
 from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException, status, Response
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException, status, Response, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -11,6 +12,12 @@ from pydantic import BaseModel, Field
 from app.ocr import process_document_ocr
 from app.pii import detect_and_redact_pii
 from app.summarizer import generate_summary
+from app.compute import (
+    execute_cloud_compute_pipeline,
+    create_task,
+    get_task_status,
+    init_compute_db
+)
 from app.dashboard import DASHBOARD_HTML
 from app.landing import LANDING_HTML
 
@@ -155,36 +162,52 @@ def health_check():
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
-@app.post("/analyze")
-@app.post("/ai-api/analyze")
+@app.on_event("startup")
+def on_startup():
+    init_compute_db()
+
+@app.post("/analyze", status_code=status.HTTP_202_ACCEPTED)
+@app.post("/ai-api/analyze", status_code=status.HTTP_202_ACCEPTED)
 async def analyze_document(
+    background_tasks: BackgroundTasks,
+    response: Response,
     file: Optional[UploadFile] = File(None),
-    text: Optional[str] = Form(None)
+    text: Optional[str] = Form(None),
+    sync: bool = False
 ):
     """
-    Unified analysis endpoint accepting either a file upload (PDF/PNG/JPG/etc.)
-    or raw text payload. Executes OCR -> PII Redaction -> Summarization pipeline.
+    Decoupled Cloud Compute Ingestion Endpoint.
+    Immediately validates the incoming file or text, assigns a unique task_id,
+    registers execute_cloud_compute_pipeline() in BackgroundTasks,
+    and returns HTTP 202 Accepted with status 'processing'.
     """
-    raw_text = ""
+    raw_text = None
     filename = "text_payload.txt"
     source_type = "raw_text"
+    file_bytes = None
+    content_type = None
 
-    # Case 1: Uploaded file
+    # Step 1: Immediate Validation
     if file is not None and file.filename:
         filename = file.filename
         source_type = "file_upload"
+        content_type = file.content_type
         try:
             file_bytes = await file.read()
             if len(file_bytes) == 0:
                 raise HTTPException(status_code=400, detail="Uploaded file is empty.")
-            raw_text = process_document_ocr(file_bytes, file.filename, file.content_type)
-        except ValueError as ve:
-            raise HTTPException(status_code=422, detail=str(ve))
+            
+            # Extension validation
+            ext = os.path.splitext(filename)[1].lower()
+            allowed_exts = {".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".pdf", ".txt"}
+            if ext and ext not in allowed_exts:
+                raise HTTPException(status_code=422, detail=f"Unsupported file format '{ext}'. Allowed: PNG, JPG, PDF, TXT.")
+        except HTTPException:
+            raise
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to process document OCR: {str(e)}")
+            raise HTTPException(status_code=400, detail=f"Failed to read file: {str(e)}")
 
-    # Case 2: Raw Text provided via form or query
-    elif text:
+    elif text is not None and text.strip():
         raw_text = text.strip()
 
     else:
@@ -193,37 +216,85 @@ async def analyze_document(
             detail="No input provided. Please upload a file via 'file' field or provide text via 'text' field."
         )
 
-    if not raw_text.strip():
-        return {
-            "status": "warning",
-            "message": "No extractable text found in the provided input.",
-            "filename": filename,
-            "source_type": source_type,
-            "original_text": "",
-            "redacted_text": "",
-            "pii_summary": {"total_redactions": 0, "categories": {}, "entities": []},
-            "summary": generate_summary("")
-        }
+    # Step 2: Assign Task ID & Queue in Multi-Process Task Store
+    task_id = f"task_{uuid.uuid4().hex[:12]}"
+    create_task(task_id)
 
-    # Step 1: PII Identification & Redaction
-    redacted_text, detected_entities, category_counts = detect_and_redact_pii(raw_text)
+    # Step 3: Synchronous override if explicitly requested
+    if sync:
+        execute_cloud_compute_pipeline(
+            task_id=task_id,
+            file_bytes=file_bytes,
+            filename=filename,
+            content_type=content_type,
+            raw_text=raw_text,
+            source_type=source_type
+        )
+        task_data = get_task_status(task_id)
+        response.status_code = status.HTTP_200_OK
+        if task_data and task_data.get("result"):
+            return task_data["result"]
+        return task_data
 
-    # Step 2: Key Highlight & Summary Generation
-    doc_summary = generate_summary(redacted_text)
+    # Step 4: Decouple Compute via FastAPI BackgroundTasks
+    background_tasks.add_task(
+        execute_cloud_compute_pipeline,
+        task_id=task_id,
+        file_bytes=file_bytes,
+        filename=filename,
+        content_type=content_type,
+        raw_text=raw_text,
+        source_type=source_type
+    )
 
+    response.status_code = status.HTTP_202_ACCEPTED
     return {
-        "status": "success",
-        "filename": filename,
-        "source_type": source_type,
-        "original_text": raw_text,
-        "redacted_text": redacted_text,
-        "pii_summary": {
-            "total_redactions": len(detected_entities),
-            "categories": category_counts,
-            "entities": detected_entities
-        },
-        "summary": doc_summary
+        "status": "processing",
+        "task_id": task_id,
+        "message": "Compute task accepted and dispatched to background vCPU worker pipeline.",
+        "stage": "OCR_EXTRACTION",
+        "compute_status_url": f"/api/compute/status/{task_id}"
     }
+
+@app.get("/api/compute/status/{task_id}")
+@app.get("/ai-api/api/compute/status/{task_id}")
+@app.get("/compute/status/{task_id}")
+@app.get("/ai-api/compute/status/{task_id}")
+def get_compute_status(task_id: str):
+    """
+    Cloud Compute Pillar Telemetry Endpoint.
+    Returns:
+      - status: 'QUEUED' | 'COMPUTING' | 'COMMITTED'
+      - compute_duration_ms: processing time taken by the CPU
+      - cpu_threads_used: number of worker threads or CPU utilization
+      - stage: 'OCR_EXTRACTION' -> 'PII_SANITIZATION' -> 'VAULT_SYNC'
+    """
+    task = get_task_status(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail=f"Compute task '{task_id}' not found.")
+
+    response_payload = {
+        "task_id": task["task_id"],
+        "status": task["status"],                          # 'QUEUED' | 'COMPUTING' | 'COMMITTED'
+        "compute_duration_ms": task["compute_duration_ms"],  # CPU processing duration in milliseconds
+        "cpu_threads_used": task["cpu_threads_used"],        # Worker threads / CPU count
+        "stage": task["stage"],                            # 'OCR_EXTRACTION' -> 'PII_SANITIZATION' -> 'VAULT_SYNC'
+        "created_at": task.get("created_at"),
+        "updated_at": task.get("updated_at")
+    }
+
+    if task.get("error"):
+        response_payload["error"] = task["error"]
+
+    if task.get("result"):
+        result_dict = task["result"]
+        response_payload["result"] = result_dict
+        # Expose top-level convenience fields for downstream consumers
+        for key in ("original_text", "redacted_text", "pii_summary", "summary", "filename", "source_type"):
+            if key in result_dict and key not in response_payload:
+                response_payload[key] = result_dict[key]
+
+    return response_payload
 
 @app.post("/vault/files")
 @app.post("/ai-api/vault/files")

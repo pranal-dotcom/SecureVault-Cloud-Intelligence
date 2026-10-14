@@ -780,51 +780,178 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         /* Step 2: OCR Extraction View */
         .metrics-bar {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            grid-template-columns: repeat(4, 1fr);
             gap: 1.15rem;
-            margin-bottom: 1.6rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 900px) {
+            .metrics-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 500px) {
+            .metrics-bar {
+                grid-template-columns: 1fr;
+            }
         }
 
         .metric-tile {
             background: #08090C;
             border: 1px solid var(--border-gold);
-            border-radius: 14px;
-            padding: 1.1rem 1.35rem;
+            border-radius: 12px;
+            padding: 1.1rem 1.25rem;
             box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
         .metric-tile-label {
-            font-size: 0.75rem;
+            font-size: 0.74rem;
             font-weight: 600;
             color: var(--gold-400);
             text-transform: uppercase;
             letter-spacing: 0.06em;
             margin-bottom: 0.4rem;
+            text-align: center;
         }
 
         .metric-tile-value {
-            font-size: 1.4rem;
+            font-size: 1.35rem;
             font-weight: 700;
             color: #FFFFFF;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 0.5rem;
+            text-align: center;
         }
 
         .code-box {
             background: #050608;
             border: 1px solid var(--border-gold);
-            border-radius: 14px;
-            padding: 1.35rem;
+            border-radius: 12px;
+            padding: 1.15rem;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.86rem;
+            font-size: 0.85rem;
             line-height: 1.7;
             color: #E2E8F0;
-            max-height: 390px;
+            max-height: 288px;
             overflow-y: auto;
             white-space: pre-wrap;
             word-break: break-word;
             box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Sleek Horizontal Chip Banner for Cloud Compute Pillar */
+        .compute-chip-bar {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.65rem;
+            background: rgba(212, 175, 55, 0.08);
+            border: 1px solid rgba(212, 175, 55, 0.28);
+            border-radius: 9999px;
+            padding: 0.35rem 0.95rem;
+            font-size: 0.78rem;
+            color: #E2E8F0;
+            margin-top: 0.5rem;
+            margin-bottom: 1.15rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+            flex-wrap: wrap;
+            line-height: 1.4;
+        }
+
+        .compute-chip-lead {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-weight: 700;
+            color: #F8FAFC;
+        }
+
+        .compute-chip-pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10B981;
+            box-shadow: 0 0 8px #10B981, 0 0 14px rgba(16, 185, 129, 0.6);
+            animation: beaconPulse 1.8s infinite ease-in-out;
+            display: inline-block;
+        }
+
+        @keyframes beaconPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.35); opacity: 0.55; }
+        }
+
+        .compute-chip-sep {
+            color: rgba(212, 175, 55, 0.35);
+            font-size: 0.75rem;
+            font-weight: 300;
+        }
+
+        .compute-chip-item {
+            color: #CBD5E1;
+            font-size: 0.76rem;
+        }
+
+        .compute-chip-item strong {
+            color: #F8FAFC;
+            font-family: 'JetBrains Mono', Consolas, monospace;
+        }
+
+        /* Step 2 Processing Skeleton Loader & Spinner */
+        .step-skeleton-loader {
+            display: flex;
+            align-items: center;
+            gap: 1.15rem;
+            padding: 1.15rem 1.4rem;
+            background: rgba(212, 175, 55, 0.06);
+            border: 1px solid var(--border-gold-strong);
+            border-radius: 14px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 16px var(--gold-glow-subtle);
+            animation: pulseGoldSubtle 2.2s infinite ease-in-out;
+        }
+
+        @keyframes pulseGoldSubtle {
+            0%, 100% { opacity: 0.9; border-color: rgba(212, 175, 55, 0.25); box-shadow: 0 4px 18px rgba(0,0,0,0.4); }
+            50% { opacity: 1; border-color: var(--gold-500); box-shadow: 0 0 25px var(--gold-glow); }
+        }
+
+        .spinner-gold {
+            width: 28px;
+            height: 28px;
+            border: 3px solid rgba(212, 175, 55, 0.22);
+            border-top: 3px solid var(--gold-400);
+            border-right: 3px solid var(--gold-500);
+            border-radius: 50%;
+            animation: spinGold 0.85s linear infinite;
+            flex-shrink: 0;
+            box-shadow: 0 0 12px var(--gold-glow);
+        }
+
+        @keyframes spinGold {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .skeleton-shimmer-bar {
+            height: 10px;
+            width: 100%;
+            background: linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(212,175,55,0.2) 50%, rgba(255,255,255,0.04) 100%);
+            background-size: 200% 100%;
+            animation: shimmerSkeleton 1.75s infinite linear;
+            border-radius: 6px;
+        }
+
+        @keyframes shimmerSkeleton {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
 
         /* Step 3: PII Redaction & Side-by-Side */
@@ -833,7 +960,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             align-items: center;
             gap: 0.65rem;
             flex-wrap: wrap;
-            margin-bottom: 1.6rem;
+            margin-bottom: 1.4rem;
         }
 
         /* Refined Gold / Amber Metallic Tags */
@@ -853,9 +980,10 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
         .comparison-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.35rem;
-            margin-bottom: 1.6rem;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+            align-items: stretch;
         }
 
         @media (max-width: 850px) {
@@ -1029,8 +1157,18 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         .commit-actions {
             display: flex;
             justify-content: center;
-            gap: 1.15rem;
+            align-items: center;
+            gap: 0.95rem;
             flex-wrap: wrap;
+            margin-top: 1.6rem;
+            margin-bottom: 1.6rem;
+        }
+
+        .commit-actions .btn-nav,
+        .commit-actions .btn-vault-action {
+            margin: 0.35rem 0.25rem;
+            min-height: 44px;
+            white-space: nowrap;
         }
 
         .btn-vault-action {
@@ -1081,31 +1219,33 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(4, 5, 8, 0.92);
-            backdrop-filter: blur(16px);
+            background: rgba(3, 4, 7, 0.82) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
             z-index: 1000;
             display: none;
             align-items: center;
             justify-content: center;
             padding: 1.25rem;
-            animation: fadeInGold 0.3s ease forwards;
+            animation: fadeInGold 0.25s ease forwards;
             box-sizing: border-box;
         }
 
         .vault-modal {
-            width: 95vw;
-            max-width: 1600px;
-            min-height: 85vh;
-            max-height: 92vh;
-            margin: 20px auto;
-            background: var(--bg-card);
-            border: 1px solid var(--gold-500);
-            border-radius: 20px;
-            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.95), 0 0 45px var(--gold-glow);
+            width: min(92vw, 1150px);
+            max-width: 1150px;
+            height: min(84vh, 760px);
+            max-height: 84vh;
+            margin: auto;
+            background: #0A0C12 !important;
+            border: 1px solid var(--gold-500) !important;
+            border-radius: 16px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.95), 0 0 35px var(--gold-glow);
             display: flex;
             flex-direction: column;
             overflow: hidden;
             box-sizing: border-box;
+            position: relative;
         }
 
         .vault-modal-header {
@@ -1343,7 +1483,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             border: 1px solid var(--border-gold);
         }
         /* SecureVault Enterprise Object Storage Modal styling */
-        .vault-modal-container, #storageModal, .storage-view-overlay, .vault-modal, .vault-modal-overlay {
+        .vault-modal-container, #storageModal, .storage-view-overlay {
             background: 
                 radial-gradient(circle at 80% 20%, rgba(245, 158, 11, 0.08) 0%, transparent 50%),
                 radial-gradient(circle at 20% 80%, rgba(30, 58, 138, 0.12) 0%, transparent 50%),
@@ -1638,14 +1778,36 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             <div class="pipeline-card">
                 <div class="card-header-block">
                     <div class="card-title-group">
-                        <h2>OCR Text Extraction & Classification</h2>
+                        <h2>OCR Text Extraction &amp; Classification</h2>
                         <p>High-fidelity text parsed by Tesseract OCR engine before zero-trust PII sanitization.</p>
+                        <!-- Sleek Horizontal Compute Chip Banner -->
+                        <div class="compute-chip-bar" id="step2ComputeBanner">
+                            <span class="compute-chip-lead"><span class="compute-chip-pulse"></span>⚡ Cloud Compute: <strong style="color: #38BDF8;" id="step2ComputeLeadStatus">Active</strong></span>
+                            <span class="compute-chip-sep">|</span>
+                            <span class="compute-chip-item">vCPU Threads: <strong id="step2ComputeThreads">8</strong></span>
+                            <span class="compute-chip-sep">|</span>
+                            <span class="compute-chip-item">Execution: <strong id="step2ComputeTime"><span id="step2ComputeMs">0</span>ms</strong></span>
+                            <span class="compute-chip-sep">|</span>
+                            <span class="compute-chip-item">Status: <strong id="step2ComputeStatus" style="color: #10B981;">Committed</strong></span>
+                        </div>
                     </div>
                     <div class="step-badge">Step 2 of 4</div>
                 </div>
 
-                <!-- Metadata Metrics -->
-                <div class="metrics-bar">
+                <!-- Step 2 Processing Skeleton Loader / Spinner (Rendered when background task is processing or pending) -->
+                <div id="step2LoadingSkeleton" class="step-skeleton-loader" style="display: none;">
+                    <div class="spinner-gold"></div>
+                    <div style="flex: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.45rem;">
+                            <span style="font-size: 0.85rem; font-weight: 600; color: var(--gold-300);" id="step2SkeletonText">⚡ Cloud Compute Worker processing OCR extraction...</span>
+                            <span style="font-size: 0.78rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;" id="step2SkeletonStage">Stage: OCR_EXTRACTION</span>
+                        </div>
+                        <div class="skeleton-shimmer-bar"></div>
+                    </div>
+                </div>
+
+                <!-- Metadata Metrics (Clean 4-Card Horizontal Grid with Centered Text - Always rendered in DOM) -->
+                <div class="metrics-bar" id="step2MetricsBar">
                     <div class="metric-tile">
                         <div class="metric-tile-label">Document Classification</div>
                         <div class="metric-tile-value" id="ocrDocType" style="color: var(--gold-300); font-size: 1.15rem;">KYC Record</div>
@@ -1660,21 +1822,23 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                     </div>
                     <div class="metric-tile">
                         <div class="metric-tile-label">OCR Confidence / Engine</div>
-                        <div class="metric-tile-value" style="color: var(--gold-400); font-size: 1.15rem;">Tesseract v5</div>
+                        <div class="metric-tile-value" id="ocrConfidence" style="color: var(--gold-400); font-size: 1.15rem;">Tesseract v5</div>
                     </div>
                 </div>
 
-                <!-- Raw Extracted Text Box -->
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
-                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--gold-300);">Raw Extracted Stream:</span>
-                    <button class="btn-nav" style="padding: 0.25rem 0.65rem; font-size: 0.78rem;" onclick="copyElementText('ocrTextDisplay')">📋 Copy Text</button>
+                <!-- Raw Extracted Stream Box (Neat Dark Container Matching Step 3 - Always rendered in DOM) -->
+                <div class="panel" id="step2RawStreamPanel" style="margin-bottom: 1.5rem; border-color: rgba(212, 175, 55, 0.3);">
+                    <div class="panel-header">
+                        <span style="color: var(--gold-300); font-weight: 700;">📄 Raw Extracted Stream</span>
+                        <button class="btn-nav" style="padding: 0.25rem 0.65rem; font-size: 0.78rem;" onclick="copyElementText('ocrTextDisplay')">📋 Copy Text</button>
+                    </div>
+                    <div class="panel-body" id="ocrTextDisplay" style="max-height: 288px; overflow-y: auto;">No extracted text available.</div>
                 </div>
-                <div class="code-box" id="ocrTextDisplay">No extracted text available.</div>
 
                 <!-- Step 2 Controls -->
                 <div class="step-controls">
                     <button class="btn-nav" onclick="navigateToStep(1)">⬅ Back to Intake</button>
-                    <button class="btn-nav-primary" onclick="navigateToStep(3)">Proceed to PII Redaction & Summary ➔</button>
+                    <button class="btn-nav-primary" id="step2NextBtn" onclick="navigateToStep(3)">Proceed to PII Redaction &amp; AI ➔</button>
                 </div>
             </div>
         </section>
@@ -1686,8 +1850,18 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             <div class="pipeline-card">
                 <div class="card-header-block">
                     <div class="card-title-group">
-                        <h2>PII Redaction & AI Executive Intelligence</h2>
+                        <h2>PII Redaction &amp; AI Executive Intelligence</h2>
                         <p>Indian regulatory compliance masking (Aadhaar, PAN, Cards) with automated executive summary.</p>
+                        <!-- Sleek Horizontal Compute Chip Banner -->
+                        <div class="compute-chip-bar" id="step3ComputeBanner">
+                            <span class="compute-chip-lead"><span class="compute-chip-pulse"></span>⚡ Cloud Compute: <strong style="color: #38BDF8;">Active</strong></span>
+                            <span class="compute-chip-sep">|</span>
+                            <span class="compute-chip-item">vCPU Threads: <strong id="step3ComputeThreads">8</strong></span>
+                            <span class="compute-chip-sep">|</span>
+                            <span class="compute-chip-item">Execution: <strong id="step3ComputeTime"><span id="step3ComputeMs">0</span>ms</strong></span>
+                            <span class="compute-chip-sep">|</span>
+                            <span class="compute-chip-item">Status: <strong id="step3ComputeStatus" style="color: #10B981;">Committed</strong></span>
+                        </div>
                     </div>
                     <div class="step-badge">Step 3 of 4</div>
                 </div>
@@ -1716,56 +1890,31 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                     </div>
                 </div>
 
-                <!-- Side-by-Side Comparison -->
+                <!-- Clean Two-Column Side-by-Side Comparison -->
                 <div class="comparison-grid">
-                    <!-- Left: Original -->
-                    <div class="panel" style="border-color: rgba(244, 63, 94, 0.35);">
-                        <div class="panel-header" style="background: rgba(45, 12, 18, 0.45);">
+                    <!-- Left Column: Original Unsanitized Stream -->
+                    <div class="panel" style="border-color: rgba(244, 63, 94, 0.4);">
+                        <div class="panel-header" style="background: rgba(45, 12, 18, 0.6); border-bottom: 1px solid rgba(244, 63, 94, 0.3);">
                             <span style="color: #fda4af;">⚠️ Original Unsanitized Stream</span>
-                            <button class="btn-nav" style="padding: 0.2rem 0.55rem; font-size: 0.75rem;" onclick="copyElementText('diffOriginalText')">Copy</button>
+                            <button class="btn-nav" style="padding: 0.2rem 0.55rem; font-size: 0.75rem;" onclick="copyElementText('diffOriginalText')">📋 Copy</button>
                         </div>
-                        <div class="panel-body" id="diffOriginalText">No data</div>
+                        <div class="panel-body" id="diffOriginalText" style="max-height: 288px; overflow-y: auto;">No data</div>
                     </div>
 
-                    <!-- Right: Redacted -->
-                    <div class="panel" style="border-color: var(--gold-500); box-shadow: 0 0 16px var(--gold-glow-subtle);">
-                        <div class="panel-header" style="background: rgba(212, 175, 55, 0.12);">
-                            <span style="color: var(--gold-300);">
-                                <svg width="18" height="18" viewBox="0 0 36 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.45)); vertical-align: middle; margin-right: 4px;">
-                                  <defs>
-                                    <linearGradient id="modalShieldMetal" x1="0%" y1="0%" x2="100%" y2="100%">
-                                      <stop offset="0%" stop-color="#FDE68A" />
-                                      <stop offset="35%" stop-color="#F59E0B" />
-                                      <stop offset="70%" stop-color="#D97706" />
-                                      <stop offset="100%" stop-color="#78350F" />
-                                    </linearGradient>
-                                    <linearGradient id="modalInnerBevel" x1="0%" y1="0%" x2="0%" y2="100%">
-                                      <stop offset="0%" stop-color="#1E293B" />
-                                      <stop offset="100%" stop-color="#0F172A" />
-                                    </linearGradient>
-                                    <radialGradient id="modalCoreVaultGlow" cx="50%" cy="45%" r="60%">
-                                      <stop offset="0%" stop-color="#FBBF24" />
-                                      <stop offset="70%" stop-color="#D97706" />
-                                      <stop offset="100%" stop-color="#92400E" />
-                                    </radialGradient>
-                                  </defs>
-                                  <path d="M18 1.5 L33 6.5 V18 C33 28.5 26.5 35.8 18 38.5 C9.5 35.8 3 28.5 3 18 V6.5 L18 1.5 Z" fill="url(#modalShieldMetal)" stroke="#FDE68A" stroke-width="0.75" />
-                                  <path d="M18 4.2 L30.2 8.2 V17.8 C30.2 26.5 24.8 32.8 18 35.2 C11.2 32.8 5.8 26.5 5.8 17.8 V8.2 L18 4.2 Z" fill="url(#modalInnerBevel)" stroke="rgba(245, 158, 11, 0.3)" stroke-width="0.8" />
-                                  <circle cx="18" cy="18" r="7.5" fill="#0B0F17" stroke="url(#modalShieldMetal)" stroke-width="1.5" />
-                                  <path d="M18 13.5 C16.2 13.5 14.8 14.9 14.8 16.7 C14.8 17.8 15.4 18.8 16.3 19.3 L15.8 22.8 H20.2 L19.7 19.3 C20.6 18.8 21.2 17.8 21.2 16.7 C21.2 14.9 19.8 13.5 18 13.5 Z" fill="url(#modalCoreVaultGlow)" />
-                                </svg>
-                                Sanitized & Redacted Output
-                            </span>
-                            <button class="btn-nav" style="padding: 0.2rem 0.55rem; font-size: 0.75rem;" onclick="copyElementText('diffRedactedText')">Copy</button>
+                    <!-- Right Column: Sanitized & Redacted Output -->
+                    <div class="panel" style="border-color: rgba(16, 185, 129, 0.45); box-shadow: 0 0 16px rgba(16, 185, 129, 0.1);">
+                        <div class="panel-header" style="background: rgba(6, 78, 59, 0.4); border-bottom: 1px solid rgba(16, 185, 129, 0.3);">
+                            <span style="color: #6ee7b7;">🛡️ Sanitized &amp; Redacted Output</span>
+                            <button class="btn-nav" style="padding: 0.2rem 0.55rem; font-size: 0.75rem;" onclick="copyElementText('diffRedactedText')">📋 Copy</button>
                         </div>
-                        <div class="panel-body" id="diffRedactedText">No data</div>
+                        <div class="panel-body" id="diffRedactedText" style="max-height: 288px; overflow-y: auto;">No data</div>
                     </div>
                 </div>
 
-                <!-- AI Executive Summary Card -->
+                <!-- AI Executive Summary & Key Highlights (Full-Width Bordered Panel Below) -->
                 <div class="ai-summary-block">
                     <div class="ai-summary-title">
-                        <span>💡 AI Executive Summary & Key Highlights</span>
+                        <span>💡 AI Executive Summary &amp; Key Highlights</span>
                     </div>
                     <ul class="ai-summary-list" id="aiHighlightsList">
                         <li>Analyzing highlights...</li>
@@ -2121,6 +2270,9 @@ Sanitized document content ready.
             }
             currentStep = step;
             updateStepperUI();
+            if (step === 2) {
+                renderStep2View(analysisData, !analysisData);
+            }
             if (step === 4) {
                 triggerVaultCommit();
             }
@@ -2128,7 +2280,8 @@ Sanitized document content ready.
         }
 
         async function triggerVaultCommit() {
-            if (!analysisData || !analysisData.redacted_text) return;
+            const sanitizedText = analysisData ? (analysisData.sanitized_text || analysisData.redacted_text) : '';
+            if (!analysisData || !sanitizedText) return;
             const statusEl = document.getElementById('specWebdavStatus');
             const syncBtn = document.getElementById('btnManualSync');
             if (statusEl) statusEl.innerHTML = '<span style="color: var(--gold-400);">⏳ Synchronizing to Nextcloud WebDAV...</span>';
@@ -2233,10 +2386,132 @@ Sanitized document content ready.
             document.getElementById('fileSelectedBox').style.display = 'none';
         }
 
+        function renderStep2View(taskData, isProcessing = false) {
+            // 1. Safe Object / Fallback Handling with optional chaining
+            const status = taskData?.status ?? taskData?.result?.status;
+            const hasText = !!(taskData?.extracted_text || taskData?.original_text || taskData?.result?.original_text || taskData?.result?.extracted_text);
+            const isFinished = (!isProcessing && (status === 'COMMITTED' || status === 'COMPLETED' || status === 'success' || hasText)) || (hasText && !isProcessing);
+            
+            // Loading Spinner / Skeleton Loader inside Step 2 card
+            const skeletonEl = document.getElementById('step2LoadingSkeleton');
+            if (skeletonEl) {
+                skeletonEl.style.display = isFinished ? 'none' : 'flex';
+            }
+
+            // Safe property access: compute metrics / execution time
+            const computeMetrics = taskData?.compute_metrics ?? taskData?.compute_telemetry ?? taskData?.result?.compute_telemetry ?? {};
+            const executionTime = taskData?.compute_metrics?.execution_time 
+                ?? (computeMetrics?.compute_duration_ms !== undefined ? (computeMetrics.compute_duration_ms >= 1000 ? (computeMetrics.compute_duration_ms / 1000).toFixed(1) + 's' : computeMetrics.compute_duration_ms + 'ms')
+                : (taskData?.compute_duration_ms !== undefined ? (taskData.compute_duration_ms >= 1000 ? (taskData.compute_duration_ms / 1000).toFixed(1) + 's' : taskData.compute_duration_ms + 'ms')
+                : "Processing..."));
+            const computeMs = computeMetrics?.compute_duration_ms ?? taskData?.compute_duration_ms ?? 0;
+            const cpuThreads = computeMetrics?.cpu_threads_used ?? taskData?.cpu_threads_used ?? 8;
+            const stage = taskData?.stage ?? (isFinished ? 'VAULT_SYNC' : 'OCR_EXTRACTION');
+            const statusStr = isFinished ? 'Committed' : (status ? status : 'Computing...');
+
+            // Compute chip banner values
+            const timeEl = document.getElementById('step2ComputeTime');
+            if (timeEl) timeEl.innerText = executionTime;
+            const msEl = document.getElementById('step2ComputeMs');
+            if (msEl) msEl.innerText = computeMs;
+            const thEl = document.getElementById('step2ComputeThreads');
+            if (thEl) thEl.innerText = cpuThreads;
+            const stEl = document.getElementById('step2ComputeStatus');
+            if (stEl) {
+                stEl.innerText = statusStr;
+                stEl.style.color = isFinished ? '#10B981' : '#38BDF8';
+            }
+            const leadStEl = document.getElementById('step2ComputeLeadStatus');
+            if (leadStEl) leadStEl.innerText = isFinished ? 'Committed' : 'Active';
+
+            const skStage = document.getElementById('step2SkeletonStage');
+            if (skStage) skStage.innerText = `Stage: ${stage}`;
+            const skText = document.getElementById('step2SkeletonText');
+            if (skText) skText.innerText = isProcessing ? `⚡ Cloud Compute processing [${stage}] (${executionTime})...` : '⚡ Cloud Compute Worker processing OCR extraction...';
+
+            // Safe extraction of text fields (supporting both extracted_text and original_text, direct and nested)
+            const extractedText = taskData?.extracted_text 
+                ?? taskData?.original_text 
+                ?? taskData?.result?.original_text 
+                ?? taskData?.result?.extracted_text 
+                ?? taskData?.data?.extracted_text 
+                ?? '';
+            const summary = taskData?.summary ?? taskData?.result?.summary ?? {};
+            const metrics = summary?.metrics ?? {};
+
+            // 3. Restore Step 2 Metric Cards & Raw Stream: Always rendered in DOM with default/placeholders
+            // Card 1: Document Classification
+            const docTypeEl = document.getElementById('ocrDocType');
+            if (docTypeEl) {
+                docTypeEl.innerText = summary?.document_type ?? (extractedText ? 'Identity & KYC Record' : (isFinished ? 'General Document' : 'KYC Record'));
+            }
+
+            // Card 2: Extracted Words
+            const calculatedWords = extractedText ? extractedText.trim().split(/\s+/).filter(Boolean).length : 0;
+            const calculatedChars = extractedText ? extractedText.length : 0;
+
+            const wordCountEl = document.getElementById('ocrWordCount');
+            if (wordCountEl) {
+                if (metrics?.word_count !== undefined) {
+                    wordCountEl.innerText = metrics.word_count;
+                } else if (extractedText) {
+                    wordCountEl.innerText = calculatedWords;
+                } else {
+                    wordCountEl.innerText = isFinished ? 0 : '0';
+                }
+            }
+
+            // Card 3: Character Count
+            const charCountEl = document.getElementById('ocrCharCount');
+            if (charCountEl) {
+                if (metrics?.character_count !== undefined) {
+                    charCountEl.innerText = metrics.character_count;
+                } else if (extractedText) {
+                    charCountEl.innerText = calculatedChars;
+                } else {
+                    charCountEl.innerText = isFinished ? 0 : '0';
+                }
+            }
+
+            // Card 4: OCR Confidence / Engine
+            const confEl = document.getElementById('ocrConfidence');
+            if (confEl) {
+                confEl.innerText = taskData?.ocr_confidence ?? (taskData?.ocr_engine ?? 'Tesseract v5');
+            }
+
+            // Raw Extracted Stream Box (Neat dark container matching Step 3)
+            const rawStreamEl = document.getElementById('ocrTextDisplay');
+            if (rawStreamEl) {
+                if (extractedText && extractedText.trim()) {
+                    rawStreamEl.innerText = extractedText;
+                } else if (isProcessing || !isFinished) {
+                    rawStreamEl.innerText = '⚡ Awaiting compute worker OCR extraction stream...';
+                } else {
+                    rawStreamEl.innerText = 'No extracted text available.';
+                }
+            }
+
+            // Step 2 Manual Navigation Button state handling
+            const nextBtn = document.getElementById('step2NextBtn');
+            if (nextBtn) {
+                if (isProcessing || !isFinished) {
+                    nextBtn.disabled = true;
+                    nextBtn.innerHTML = '<span>⚡ Processing Extraction...</span>';
+                    nextBtn.style.opacity = '0.6';
+                    nextBtn.style.cursor = 'not-allowed';
+                } else {
+                    nextBtn.disabled = false;
+                    nextBtn.innerHTML = '<span>Proceed to PII Redaction &amp; AI ➔</span>';
+                    nextBtn.style.opacity = '1';
+                    nextBtn.style.cursor = 'pointer';
+                }
+            }
+        }
+
         async function executeIntakeAnalysis() {
             const btn = document.getElementById('processBtn');
             btn.disabled = true;
-            btn.innerHTML = '<span>⏳ Processing OCR & Redaction...</span>';
+            btn.innerHTML = '<span>⚡ Dispatching to Cloud Compute Pipeline...</span>';
 
             try {
                 let response;
@@ -2263,24 +2538,113 @@ Sanitized document content ready.
                     response = await fetch('/ai-api/analyze', { method: 'POST', body: formData });
                 }
 
-                if (!response.ok) {
-                    const err = await response.json();
+                if (!response.ok && response.status !== 202) {
+                    const err = await response.json().catch(() => ({}));
                     throw new Error(err.detail || 'Analysis request failed');
                 }
 
-                const data = await response.json();
-                analysisData = data;
-                populatePipelineResults(data);
+                const rawJson = await response.json();
+                // Backward compatibility: handle direct response payload (e.g. response.data.extracted_text)
+                const initData = rawJson?.data ?? rawJson;
+                let finalData = initData;
+                let telemetryData = null;
 
-                maxUnlockedStep = 4;
+                const taskId = initData?.task_id || rawJson?.task_id;
+
+                // Step 1 -> Step 2 transition: Immediately activate Step 2 and render clean loading spinner
+                maxUnlockedStep = Math.max(maxUnlockedStep, 2);
                 currentStep = 2;
                 updateStepperUI();
-                showToast("Extraction and PII sanitization completed successfully.");
+                renderStep2View(initData, true);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                // Polling & Auto-Transition Pipeline
+                if (taskId) {
+                    let computeFinished = false;
+                    let attempts = 0;
+                    const maxAttempts = 100;
+
+                    while (!computeFinished && attempts < maxAttempts) {
+                        attempts++;
+                        await new Promise(res => setTimeout(res, 350));
+                        
+                        let pollResp;
+                        try {
+                            pollResp = await fetch(`/ai-api/api/compute/status/${taskId}`);
+                            if (!pollResp.ok) {
+                                pollResp = await fetch(`/api/compute/status/${taskId}`);
+                            }
+                        } catch (e) {
+                            continue;
+                        }
+
+                        if (!pollResp || !pollResp.ok) continue;
+                        
+                        const statusData = await pollResp.json();
+                        telemetryData = statusData;
+                        
+                        // Live update Step 2 view while processing
+                        const isDone = (statusData?.status === 'COMMITTED' || statusData?.status === 'COMPLETED');
+                        renderStep2View(statusData, !isDone);
+                        
+                        const duration = statusData?.compute_metrics?.execution_time 
+                            ?? (statusData?.compute_duration_ms !== undefined ? `${statusData.compute_duration_ms}ms` : 'Processing...');
+                        const stage = statusData?.stage || 'COMPUTING';
+                        btn.innerHTML = `<span>⚡ Compute [${stage}]: ${duration}...</span>`;
+
+                        // Required: check for "COMMITTED" or "COMPLETED" status
+                        if (statusData?.status === 'COMMITTED' || statusData?.status === 'COMPLETED') {
+                            computeFinished = true;
+                            finalData = statusData.result || statusData;
+                            
+                            // Ensure both extracted_text and sanitized_text states are properly updated
+                            const extractedText = finalData?.extracted_text || finalData?.original_text || statusData?.extracted_text || statusData?.original_text || '';
+                            const sanitizedText = finalData?.sanitized_text || finalData?.redacted_text || statusData?.sanitized_text || statusData?.redacted_text || '';
+                            finalData.extracted_text = extractedText;
+                            finalData.original_text = extractedText;
+                            finalData.sanitized_text = sanitizedText;
+                            finalData.redacted_text = sanitizedText;
+                            break;
+                        } else if (statusData?.status === 'FAILED') {
+                            throw new Error(statusData.error || 'Cloud compute pipeline execution failed.');
+                        }
+                    }
+
+                    if (!computeFinished) {
+                        throw new Error("Cloud compute pipeline timed out awaiting completion.");
+                    }
+                } else {
+                    // Backward compatibility: synchronous response format without task_id
+                    // Support direct response payload (e.g. response.data.extracted_text)
+                    const directExtracted = initData?.extracted_text || initData?.original_text || rawJson?.extracted_text || rawJson?.original_text || '';
+                    const directSanitized = initData?.sanitized_text || initData?.redacted_text || rawJson?.sanitized_text || rawJson?.redacted_text || '';
+                    finalData.extracted_text = directExtracted;
+                    finalData.original_text = directExtracted;
+                    finalData.sanitized_text = directSanitized;
+                    finalData.redacted_text = directSanitized;
+                }
+
+                // Update state and populate Step 2 & Step 3 views
+                analysisData = finalData;
+                renderStep2View(finalData, false);
+                populatePipelineResults(finalData, telemetryData);
+
+                // Fully unlock pipeline steps
+                maxUnlockedStep = 4;
+                
+                const ms = telemetryData?.compute_metrics?.execution_time 
+                    ?? (telemetryData?.compute_duration_ms !== undefined ? `${telemetryData.compute_duration_ms}ms` 
+                    : (finalData?.compute_telemetry?.compute_duration_ms !== undefined ? `${finalData.compute_telemetry.compute_duration_ms}ms` : '0ms'));
+                showToast(`Cloud Compute Finished: Processed in ${ms} on vCPU worker.`);
                 
                 // Immediately synchronize sanitized copy to Nextcloud Vault in background
                 triggerVaultCommit();
 
+                // Retain operator on Step 2 to allow thorough inspection of OCR metrics and raw text stream
+                // The operator manually advances to Step 3 using the "Proceed to PII Redaction & AI ➔" button
+
             } catch (err) {
+                console.error("Intake analysis error:", err);
                 alert("Error during document analysis: " + err.message);
             } finally {
                 btn.disabled = false;
@@ -2288,83 +2652,128 @@ Sanitized document content ready.
             }
         }
 
-        function populatePipelineResults(data) {
-            const summary = data.summary || {};
-            const metrics = summary.metrics || {};
-            const piiSummary = data.pii_summary || {};
+        function populatePipelineResults(data, telemetryData) {
+            if (!data) return;
+            const taskData = data;
+            const summary = taskData?.summary ?? {};
+            const metrics = summary?.metrics ?? {};
+            const piiSummary = taskData?.pii_summary ?? {};
+
+            // Safe extraction of extracted and sanitized text
+            const extractedText = taskData?.extracted_text ?? taskData?.original_text ?? '';
+            const sanitizedText = taskData?.sanitized_text ?? taskData?.redacted_text ?? '';
 
             // Step 2: OCR Extraction details
-            document.getElementById('ocrDocType').innerText = summary.document_type || 'General Document';
-            document.getElementById('ocrWordCount').innerText = metrics.word_count || 0;
-            document.getElementById('ocrCharCount').innerText = metrics.character_count || 0;
-            document.getElementById('ocrTextDisplay').innerText = data.original_text || 'No text extracted.';
+            const ocrDocEl = document.getElementById('ocrDocType');
+            if (ocrDocEl) ocrDocEl.innerText = summary?.document_type || 'KYC Record';
+            const ocrWEl = document.getElementById('ocrWordCount');
+            if (ocrWEl) ocrWEl.innerText = metrics?.word_count ?? (extractedText ? extractedText.split(/\\s+/).filter(Boolean).length : 0);
+            const ocrCEl = document.getElementById('ocrCharCount');
+            if (ocrCEl) ocrCEl.innerText = metrics?.character_count ?? extractedText.length;
+            const ocrTEl = document.getElementById('ocrTextDisplay');
+            if (ocrTEl) ocrTEl.innerText = extractedText || 'No text extracted.';
+            const ocrConfEl = document.getElementById('ocrConfidence');
+            if (ocrConfEl) ocrConfEl.innerText = taskData?.ocr_confidence ?? 'Tesseract v5';
+
+            // Expose Compute Pillar Telemetry in Step 2 & Step 3
+            const telemetry = telemetryData || taskData?.compute_telemetry || taskData?.compute_metrics || {};
+            const computeMs = telemetry?.compute_duration_ms !== undefined ? telemetry.compute_duration_ms : 0;
+            const cpuThreads = telemetry?.cpu_threads_used || telemetry?.cpu_threads || 8;
+            const statusRaw = telemetry?.status || taskData?.status || 'COMMITTED';
+            const statusStr = (statusRaw === 'COMMITTED' || statusRaw === 'COMPLETED' || statusRaw === 'success') ? 'Committed' : statusRaw;
+            const formattedTime = taskData?.compute_metrics?.execution_time 
+                ?? (computeMs >= 1000 ? (computeMs / 1000).toFixed(1) + 's' : computeMs + 'ms');
+
+            ['step2', 'step3'].forEach(p => {
+                const msEl = document.getElementById(p + 'ComputeMs');
+                if (msEl) msEl.innerText = computeMs;
+                const timeEl = document.getElementById(p + 'ComputeTime');
+                if (timeEl) timeEl.innerText = formattedTime;
+                const thEl = document.getElementById(p + 'ComputeThreads');
+                if (thEl) thEl.innerText = cpuThreads;
+                const stEl = document.getElementById(p + 'ComputeStatus');
+                if (stEl) {
+                    stEl.innerText = statusStr;
+                    stEl.style.color = (statusStr === 'Committed' || statusStr === 'COMMITTED' || statusStr === 'COMPLETED') ? '#10B981' : '#38BDF8';
+                }
+            });
 
             // Step 3: PII Redaction details
             const piiBar = document.getElementById('piiBreakdownContainer');
-            piiBar.innerHTML = '';
-            
-            const totalRedactions = piiSummary.total_redactions || 0;
-            const mainBadge = document.createElement('div');
-            mainBadge.className = 'pii-tag-count';
-            mainBadge.style.background = totalRedactions > 0 ? 'rgba(212, 175, 55, 0.18)' : 'rgba(212, 175, 55, 0.08)';
-            mainBadge.style.color = totalRedactions > 0 ? '#F5D77F' : '#F3E5AB';
-            mainBadge.style.borderColor = totalRedactions > 0 ? '#D4AF37' : 'rgba(212, 175, 55, 0.4)';
-            mainBadge.innerHTML = `<svg width="14" height="14" viewBox="0 0 36 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.45)); vertical-align: middle; margin-right: 4px; margin-top: -2px;">
-                          <defs>
-                            <linearGradient id="jsShieldMetal" x1="0%" y1="0%" x2="100%" y2="100%">
-                              <stop offset="0%" stop-color="#FDE68A" />
-                              <stop offset="35%" stop-color="#F59E0B" />
-                              <stop offset="70%" stop-color="#D97706" />
-                              <stop offset="100%" stop-color="#78350F" />
-                            </linearGradient>
-                            <radialGradient id="jsCoreVaultGlow" cx="50%" cy="45%" r="60%">
-                              <stop offset="0%" stop-color="#FBBF24" />
-                              <stop offset="70%" stop-color="#D97706" />
-                              <stop offset="100%" stop-color="#92400E" />
-                            </radialGradient>
-                          </defs>
-                          <path d="M18 1.5 L33 6.5 V18 C33 28.5 26.5 35.8 18 38.5 C9.5 35.8 3 28.5 3 18 V6.5 L18 1.5 Z" fill="url(#jsShieldMetal)" stroke="#FDE68A" stroke-width="0.75" />
-                          <circle cx="18" cy="18" r="7.5" fill="#0B0F17" stroke="url(#jsShieldMetal)" stroke-width="1.5" />
-                          <path d="M18 13.5 C16.2 13.5 14.8 14.9 14.8 16.7 C14.8 17.8 15.4 18.8 16.3 19.3 L15.8 22.8 H20.2 L19.7 19.3 C20.6 18.8 21.2 17.8 21.2 16.7 C21.2 14.9 19.8 13.5 18 13.5 Z" fill="url(#jsCoreVaultGlow)" />
-                        </svg> ${totalRedactions} Sensitive Items Redacted`;
-            piiBar.appendChild(mainBadge);
+            if (piiBar) {
+                piiBar.innerHTML = '';
+                
+                const totalRedactions = piiSummary?.total_redactions || 0;
+                const mainBadge = document.createElement('div');
+                mainBadge.className = 'pii-tag-count';
+                mainBadge.style.background = totalRedactions > 0 ? 'rgba(212, 175, 55, 0.18)' : 'rgba(212, 175, 55, 0.08)';
+                mainBadge.style.color = totalRedactions > 0 ? '#F5D77F' : '#F3E5AB';
+                mainBadge.style.borderColor = totalRedactions > 0 ? '#D4AF37' : 'rgba(212, 175, 55, 0.4)';
+                mainBadge.innerHTML = `<svg width="14" height="14" viewBox="0 0 36 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.45)); vertical-align: middle; margin-right: 4px; margin-top: -2px;">
+                              <defs>
+                                <linearGradient id="jsShieldMetal" x1="0%" y1="0%" x2="100%" y2="100%">
+                                  <stop offset="0%" stop-color="#FDE68A" />
+                                  <stop offset="35%" stop-color="#F59E0B" />
+                                  <stop offset="70%" stop-color="#D97706" />
+                                  <stop offset="100%" stop-color="#78350F" />
+                                </linearGradient>
+                                <radialGradient id="jsCoreVaultGlow" cx="50%" cy="45%" r="60%">
+                                  <stop offset="0%" stop-color="#FBBF24" />
+                                  <stop offset="70%" stop-color="#D97706" />
+                                  <stop offset="100%" stop-color="#92400E" />
+                                </radialGradient>
+                              </defs>
+                              <path d="M18 1.5 L33 6.5 V18 C33 28.5 26.5 35.8 18 38.5 C9.5 35.8 3 28.5 3 18 V6.5 L18 1.5 Z" fill="url(#jsShieldMetal)" stroke="#FDE68A" stroke-width="0.75" />
+                              <circle cx="18" cy="18" r="7.5" fill="#0B0F17" stroke="url(#jsShieldMetal)" stroke-width="1.5" />
+                              <path d="M18 13.5 C16.2 13.5 14.8 14.9 14.8 16.7 C14.8 17.8 15.4 18.8 16.3 19.3 L15.8 22.8 H20.2 L19.7 19.3 C20.6 18.8 21.2 17.8 21.2 16.7 C21.2 14.9 19.8 13.5 18 13.5 Z" fill="url(#jsCoreVaultGlow)" />
+                            </svg> ${totalRedactions} Sensitive Items Redacted`;
+                piiBar.appendChild(mainBadge);
 
-            const categories = piiSummary.categories || {};
-            for (const [cat, count] of Object.entries(categories)) {
-                const badge = document.createElement('div');
-                badge.className = 'pii-tag-count';
-                badge.innerText = `${cat}: ${count}`;
-                piiBar.appendChild(badge);
+                const categories = piiSummary?.categories || {};
+                for (const [cat, count] of Object.entries(categories)) {
+                    const badge = document.createElement('div');
+                    badge.className = 'pii-tag-count';
+                    badge.innerText = `${cat}: ${count}`;
+                    piiBar.appendChild(badge);
+                }
             }
 
-            document.getElementById('diffOriginalText').innerText = data.original_text || '';
+            const origEl = document.getElementById('diffOriginalText');
+            if (origEl) origEl.innerText = extractedText || '';
             
             // Format redacted text with Gold/Amber metallic badge tags
-            let fmtRedacted = escapeHtml(data.redacted_text || '');
-            fmtRedacted = fmtRedacted.replace(/\\[REDACTED_AADHAAR\\]/g, '<span class="redacted-badge">[REDACTED_AADHAAR]</span>');
-            fmtRedacted = fmtRedacted.replace(/\\[REDACTED_PAN\\]/g, '<span class="redacted-badge">[REDACTED_PAN]</span>');
-            fmtRedacted = fmtRedacted.replace(/\\[REDACTED_CREDIT_CARD\\]/g, '<span class="redacted-badge">[REDACTED_CREDIT_CARD]</span>');
-            fmtRedacted = fmtRedacted.replace(/\\[REDACTED_EMAIL\\]/g, '<span class="redacted-badge">[REDACTED_EMAIL]</span>');
-            fmtRedacted = fmtRedacted.replace(/\\[REDACTED_PHONE\\]/g, '<span class="redacted-badge">[REDACTED_PHONE]</span>');
-            document.getElementById('diffRedactedText').innerHTML = fmtRedacted;
+            const redEl = document.getElementById('diffRedactedText');
+            if (redEl) {
+                let fmtRedacted = escapeHtml(sanitizedText || '');
+                fmtRedacted = fmtRedacted.replace(/\\[REDACTED_AADHAAR\\]/g, '<span class="redacted-badge">[REDACTED_AADHAAR]</span>');
+                fmtRedacted = fmtRedacted.replace(/\\[REDACTED_PAN\\]/g, '<span class="redacted-badge">[REDACTED_PAN]</span>');
+                fmtRedacted = fmtRedacted.replace(/\\[REDACTED_CREDIT_CARD\\]/g, '<span class="redacted-badge">[REDACTED_CREDIT_CARD]</span>');
+                fmtRedacted = fmtRedacted.replace(/\\[REDACTED_EMAIL\\]/g, '<span class="redacted-badge">[REDACTED_EMAIL]</span>');
+                fmtRedacted = fmtRedacted.replace(/\\[REDACTED_PHONE\\]/g, '<span class="redacted-badge">[REDACTED_PHONE]</span>');
+                redEl.innerHTML = fmtRedacted;
+            }
 
             // AI Highlights List
             const hlList = document.getElementById('aiHighlightsList');
-            hlList.innerHTML = '';
-            const highlights = summary.key_highlights || [];
-            if (highlights.length === 0) {
-                hlList.innerHTML = '<li>Document parsed. No high-priority risks detected.</li>';
-            } else {
-                highlights.forEach(h => {
-                    const li = document.createElement('li');
-                    li.innerText = h;
-                    hlList.appendChild(li);
-                });
+            if (hlList) {
+                hlList.innerHTML = '';
+                const highlights = summary?.key_highlights || [];
+                if (highlights.length === 0) {
+                    hlList.innerHTML = '<li>Document parsed. No high-priority risks detected.</li>';
+                } else {
+                    highlights.forEach(h => {
+                        const li = document.createElement('li');
+                        li.innerText = h;
+                        hlList.appendChild(li);
+                    });
+                }
             }
 
             // Step 4: Audit Specs
-            document.getElementById('specPiiCount').innerText = `${totalRedactions} PII Elements Scrubbed`;
-            document.getElementById('specTimestamp').innerText = new Date().toISOString();
+            const specPii = document.getElementById('specPiiCount');
+            if (specPii) specPii.innerText = `${piiSummary?.total_redactions || 0} PII Elements Scrubbed`;
+            const specTime = document.getElementById('specTimestamp');
+            if (specTime) specTime.innerText = new Date().toISOString();
         }
 
         function escapeHtml(str) {
